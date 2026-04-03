@@ -39,8 +39,12 @@ export class TenantsController {
   }
 
   @Get(':id')
-  async findById(@Param('id') id: string) {
-    return this.tenantsService.findById(id);
+  async findById(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ) {
+    // Verify user is a member of the tenant before exposing data
+    return this.tenantsService.findByIdForUser(id, user.sub);
   }
 
   @Patch('current')

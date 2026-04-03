@@ -89,6 +89,28 @@ export class TenantsService {
     return tenant;
   }
 
+  /**
+   * Find tenant by ID with authorization check.
+   * Only members of the tenant can access its details.
+   */
+  async findByIdForUser(id: string, userId: string) {
+    // First verify user is a member
+    const membership = await this.prisma.tenantMember.findUnique({
+      where: {
+        userId_tenantId: {
+          userId,
+          tenantId: id,
+        },
+      },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException('You are not a member of this tenant');
+    }
+
+    return this.findById(id);
+  }
+
   async update(id: string, userId: string, data: { name?: string }) {
     await this.verifyOwnerOrAdmin(id, userId);
 

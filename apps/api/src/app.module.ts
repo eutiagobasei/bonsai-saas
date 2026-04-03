@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
 import { DatabaseModule } from './common/database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -19,6 +20,25 @@ import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
       envFilePath: ['.env.local', '.env'],
     }),
 
+    // Rate Limiting
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1000,
+        limit: 3,
+      },
+      {
+        name: 'medium',
+        ttl: 10000,
+        limit: 20,
+      },
+      {
+        name: 'long',
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
+
     // Database
     DatabaseModule,
 
@@ -29,6 +49,11 @@ import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
     TenantsModule,
   ],
   providers: [
+    // Global Rate Limiting Guard
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     // Global JWT Auth Guard (can be bypassed with @Public() decorator)
     {
       provide: APP_GUARD,
