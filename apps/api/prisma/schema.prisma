@@ -1,0 +1,125 @@
+// Prisma Schema for Multi-Tenant SaaS
+// Uses schema-per-tenant strategy with shared public schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// PUBLIC SCHEMA - Shared across all tenants
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  name          String?
+  emailVerified DateTime? @map("email_verified")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // User can belong to multiple tenants
+  tenantMemberships TenantMember[]
+  refreshTokens     RefreshToken[]
+
+  @@map("users")
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  schema    String   @unique // PostgreSQL schema name: tenant_{id}
+  plan      Plan     @default(FREE)
+  status    TenantStatus @default(ACTIVE)
+  settings  Json?    @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  members TenantMember[]
+
+  @@map("tenants")
+}
+
+model TenantMember {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  tenantId  String   @map("tenant_id")
+  role      TenantRole @default(MEMBER)
+  joinedAt  DateTime @default(now()) @map("joined_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+  @@map("tenant_members")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  tenantId  String?  @map("tenant_id") // Optional: context for the refresh
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  revokedAt DateTime? @map("revoked_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+// ============================================
+// Audit Log - Track sensitive operations
+// ============================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?  @map("user_id")
+  tenantId  String?  @map("tenant_id")
+  action    String
+  entity    String
+  entityId  String?  @map("entity_id")
+  oldData   Json?    @map("old_data")
+  newData   Json?    @map("new_data")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([tenantId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================
+// Enums
+// ============================================
+
+enum Plan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum TenantRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}

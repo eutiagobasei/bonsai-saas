@@ -1,0 +1,30 @@
+{
+  "name": "my-saas",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "docker:up": "docker compose -f infra/docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f infra/docker/docker-compose.yml down",
+    "docker:logs": "docker compose -f infra/docker/docker-compose.yml logs -f",
+    "db:migrate": "npm run db:migrate --workspace=@my-saas/api",
+    "db:migrate:prod": "npm run db:migrate:prod --workspace=@my-saas/api",
+    "db:studio": "npm run db:studio --workspace=@my-saas/api"
+  },
+  "devDependencies": {
+    "turbo": "^1.13.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "npm@10.0.0"
+}

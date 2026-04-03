@@ -1,0 +1,214 @@
+name: Deploy PROD
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.2.3)'
+        required: true
+        type: string
+      skip_backup:
+        description: 'Skip database backup (NOT recommended)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  REGISTRY: ghcr.io
+  API_IMAGE: ghcr.io/${{ github.repository_owner }}/my-saas-api
+  WEB_IMAGE: ghcr.io/${{ github.repository_owner }}/my-saas-web
+
+jobs:
+  validate:
+    name: Validate Version
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate version tag exists
+        run: |
+          if ! git rev-parse "${{ github.event.inputs.version }}" >/dev/null 2>&1; then
+            echo "Error: Tag ${{ github.event.inputs.version }} does not exist"
+            echo "Please create the tag first with: git tag ${{ github.event.inputs.version }}"
+            exit 1
+          fi
+
+  build-and-push:
+    name: Build & Push Images
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/api
+          push: true
+          tags: |
+            ${{ env.API_IMAGE }}:${{ github.event.inputs.version }}
+            ${{ env.API_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Web
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/web
+          push: true
+          tags: |
+            ${{ env.WEB_IMAGE }}:${{ github.event.inputs.version }}
+            ${{ env.WEB_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.PROD_API_URL }}
+
+  deploy:
+    name: Deploy to PROD
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: production  # Requires approval in GitHub settings
+
+    steps:
+      - name: Create database backup
+        if: ${{ !github.event.inputs.skip_backup }}
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd /opt/my-saas/prod
+
+            # Create pre-deploy backup
+            BACKUP_FILE="backup-pre-deploy-${{ github.event.inputs.version }}-$(date +%Y%m%d%H%M%S).sql"
+            docker compose exec -T postgres pg_dump -U $DB_USER $DB_NAME > backups/$BACKUP_FILE
+
+            if [ ! -s "backups/$BACKUP_FILE" ]; then
+              echo "Error: Backup file is empty"
+              exit 1
+            fi
+
+            gzip "backups/$BACKUP_FILE"
+            echo "Backup created: backups/${BACKUP_FILE}.gz"
+
+      - name: Deploy to PROD VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd /opt/my-saas/prod
+
+            # Set version
+            export VERSION="${{ github.event.inputs.version }}"
+
+            # Pull specific version
+            docker compose pull
+
+            # Run database migrations (SAFE: only deploy, NEVER creates new migrations)
+            # This is the ONLY way to run migrations in production
+            docker compose run --rm api npx prisma migrate deploy
+
+            # Restart services with zero downtime
+            docker compose up -d --no-deps --scale api=2 api
+            sleep 10
+            docker compose up -d --no-deps --scale api=1 api
+
+            docker compose up -d web
+
+            # Cleanup old images
+            docker image prune -f
+
+            # Health check
+            sleep 15
+            curl -f http://localhost:3000/health || exit 1
+
+            echo "Deploy to PROD completed: $VERSION"
+
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd /opt/my-saas/prod
+
+            # Check all services are healthy
+            docker compose ps
+
+            # Check API health
+            curl -f http://localhost:3000/health
+
+            # Check Web health
+            curl -f http://localhost:3001/
+
+            echo "All services are healthy!"
+
+      - name: Rollback on failure
+        if: failure()
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd /opt/my-saas/prod
+
+            echo "Deployment failed, attempting rollback..."
+
+            # Get previous version from docker images
+            PREVIOUS_TAG=$(docker images ${{ env.API_IMAGE }} --format "{{.Tag}}" | grep -v latest | head -2 | tail -1)
+
+            if [ -n "$PREVIOUS_TAG" ]; then
+              export VERSION=$PREVIOUS_TAG
+              docker compose up -d
+              echo "Rolled back to version: $PREVIOUS_TAG"
+            else
+              echo "No previous version found for rollback"
+              exit 1
+            fi
+
+      - name: Create GitHub Release
+        if: success()
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          name: Release ${{ github.event.inputs.version }}
+          generate_release_notes: true
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "PROD deployment successful: ${{ github.event.inputs.version }}"
+          # Add Slack/Discord notification here
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "PROD deployment failed: ${{ github.event.inputs.version }}"
+          # Add Slack/Discord notification with @channel mention

@@ -1,0 +1,143 @@
+# Traefik Dynamic Configuration - Middlewares
+# Security headers, rate limiting, and other common middlewares
+
+http:
+  middlewares:
+    # Security Headers (HSTS, XSS protection, etc.)
+    security-headers:
+      headers:
+        # HSTS - Force HTTPS for 1 year
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+
+        # Prevent content-type sniffing
+        contentTypeNosniff: true
+
+        # XSS Protection
+        browserXssFilter: true
+
+        # Referrer Policy
+        referrerPolicy: "strict-origin-when-cross-origin"
+
+        # Prevent clickjacking
+        frameDeny: true
+
+        # Content Security Policy
+        contentSecurityPolicy: >-
+          default-src 'self';
+          script-src 'self' 'unsafe-inline' 'unsafe-eval';
+          style-src 'self' 'unsafe-inline';
+          img-src 'self' data: https:;
+          font-src 'self' data:;
+          connect-src 'self' https://api.${DOMAIN};
+          frame-ancestors 'none';
+
+        # Additional security headers
+        customResponseHeaders:
+          X-Content-Type-Options: "nosniff"
+          X-Frame-Options: "DENY"
+          X-XSS-Protection: "1; mode=block"
+          Permissions-Policy: "camera=(), microphone=(), geolocation=()"
+
+    # Rate limiting for general API endpoints
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1m
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    # Stricter rate limiting for authentication endpoints
+    rate-limit-auth:
+      rateLimit:
+        average: 10
+        burst: 5
+        period: 1m
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    # Very strict rate limiting for password reset
+    rate-limit-sensitive:
+      rateLimit:
+        average: 3
+        burst: 3
+        period: 1m
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    # Redirect www to non-www
+    www-redirect:
+      redirectRegex:
+        regex: "^https://www\\.(.*)"
+        replacement: "https://${1}"
+        permanent: true
+
+    # Compress responses
+    compress:
+      compress:
+        excludedContentTypes:
+          - "text/event-stream"
+
+    # Basic Auth for admin routes (optional)
+    admin-auth:
+      basicAuth:
+        users:
+          # Generate with: htpasswd -nb admin your-password
+          - "admin:$apr1$xxxxxxxxxxxxx"
+        removeHeader: true
+
+    # IP Whitelist (for admin/internal routes)
+    ip-whitelist:
+      ipWhiteList:
+        sourceRange:
+          - "127.0.0.1/32"
+          - "10.0.0.0/8"
+          # Add your office/VPN IP here
+          # - "YOUR_IP/32"
+
+    # Circuit breaker for resilience
+    circuit-breaker:
+      circuitBreaker:
+        expression: "NetworkErrorRatio() > 0.5 || ResponseCodeRatio(500, 600, 0, 600) > 0.5"
+        checkPeriod: 10s
+        fallbackDuration: 30s
+        recoveryDuration: 60s
+
+    # Retry failed requests
+    retry:
+      retry:
+        attempts: 3
+        initialInterval: 100ms
+
+  # Chain middlewares for different use cases
+  chains:
+    # For public API endpoints
+    api-chain:
+      chain:
+        middlewares:
+          - security-headers
+          - rate-limit
+          - compress
+
+    # For authentication endpoints
+    auth-chain:
+      chain:
+        middlewares:
+          - security-headers
+          - rate-limit-auth
+          - compress
+
+    # For admin/internal endpoints
+    admin-chain:
+      chain:
+        middlewares:
+          - security-headers
+          - ip-whitelist
+          - admin-auth
+          - rate-limit

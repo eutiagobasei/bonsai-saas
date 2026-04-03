@@ -1,0 +1,139 @@
+# VPS PROD Environment Docker Compose
+# Usage: VERSION=v1.0.0 docker compose -f docker-compose.prod.yml up -d
+
+services:
+  api:
+    image: ghcr.io/${GITHUB_USER:-your-username}/my-saas-api:${VERSION:-latest}
+    container_name: my-saas-prod-api
+    restart: unless-stopped
+    env_file:
+      - .env
+      - .secrets
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - internal
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.my-saas-api.rule=Host(`api.${DOMAIN}`)"
+      - "traefik.http.routers.my-saas-api.entrypoints=websecure"
+      - "traefik.http.routers.my-saas-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.my-saas-api.middlewares=security-headers,rate-limit"
+      - "traefik.http.services.my-saas-api.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  web:
+    image: ghcr.io/${GITHUB_USER:-your-username}/my-saas-web:${VERSION:-latest}
+    container_name: my-saas-prod-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://api.${DOMAIN}
+    depends_on:
+      - api
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      # Main domain and www
+      - "traefik.http.routers.my-saas-web.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"
+      - "traefik.http.routers.my-saas-web.entrypoints=websecure"
+      - "traefik.http.routers.my-saas-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.my-saas-web.middlewares=security-headers,www-redirect"
+      - "traefik.http.services.my-saas-web.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: my-saas-prod-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  redis:
+    image: redis:7-alpine
+    container_name: my-saas-prod-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  internal:
+    driver: bridge
+  traefik-public:
+    external: true

@@ -1,0 +1,117 @@
+name: Deploy DEV
+
+on:
+  push:
+    branches: [develop]
+
+env:
+  REGISTRY: ghcr.io
+  API_IMAGE: ghcr.io/${{ github.repository_owner }}/my-saas-api
+  WEB_IMAGE: ghcr.io/${{ github.repository_owner }}/my-saas-web
+
+jobs:
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for API
+        id: meta-api
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.API_IMAGE }}
+          tags: |
+            type=raw,value=dev
+            type=sha,prefix=dev-
+
+      - name: Build and push API
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/api
+          push: true
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ steps.meta-api.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Extract metadata for Web
+        id: meta-web
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.WEB_IMAGE }}
+          tags: |
+            type=raw,value=dev
+            type=sha,prefix=dev-
+
+      - name: Build and push Web
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/web
+          push: true
+          tags: ${{ steps.meta-web.outputs.tags }}
+          labels: ${{ steps.meta-web.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.DEV_API_URL }}
+
+  deploy:
+    name: Deploy to DEV
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to DEV VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USER }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          script: |
+            cd /opt/my-saas/dev
+
+            # Pull latest images
+            docker compose pull
+
+            # Run database migrations (SAFE: only deploy, never create)
+            docker compose run --rm api npx prisma migrate deploy
+
+            # Restart services
+            docker compose up -d
+
+            # Cleanup old images
+            docker image prune -f
+
+            # Health check
+            sleep 10
+            curl -f http://localhost:3000/health || exit 1
+
+            echo "Deploy to DEV completed successfully"
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "DEV deployment successful!"
+          # Add Slack/Discord notification here if needed
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "DEV deployment failed!"
+          # Add Slack/Discord notification here if needed

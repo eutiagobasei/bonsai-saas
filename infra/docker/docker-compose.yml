@@ -1,0 +1,118 @@
+# Local Development Docker Compose
+# Usage: docker compose up
+
+services:
+  api:
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile.dev
+    container_name: my-saas-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../apps/api:/app
+      - /app/node_modules
+      - /app/dist
+    env_file:
+      - ../../apps/api/.env
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://saas:saas_dev_password@postgres:5432/saas_dev
+      - REDIS_URL=redis://:redis_dev_password@redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - internal
+
+  web:
+    build:
+      context: ../../apps/web
+      dockerfile: Dockerfile.dev
+    container_name: my-saas-web
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    volumes:
+      - ../../apps/web:/app
+      - /app/node_modules
+      - /app/.next
+    env_file:
+      - ../../apps/web/.env.local
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
+    depends_on:
+      - api
+    networks:
+      - internal
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: my-saas-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: saas
+      POSTGRES_PASSWORD: saas_dev_password
+      POSTGRES_DB: saas_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saas -d saas_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  redis:
+    image: redis:7-alpine
+    container_name: my-saas-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass redis_dev_password
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis_dev_password", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  # Optional: Database admin UI
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: my-saas-pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@localhost.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - internal
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+  redis_data:
+  pgadmin_data:
+
+networks:
+  internal:
+    driver: bridge
