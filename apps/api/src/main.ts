@@ -1,9 +1,10 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { findAvailablePort } from './common/utils/port.util';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -81,10 +82,12 @@ async function bootstrap() {
     },
   });
 
-  const port = configService.get<number>('PORT', 3000);
+  const preferredPort = configService.get<number>('PORT', 3000);
+  const port = await findAvailablePort(preferredPort);
   await app.listen(port);
 
-  console.log(`Application running on port ${port}`);
-  console.log(`Swagger documentation available at http://localhost:${port}/api/docs`);
+  const logger = new Logger('Bootstrap');
+  logger.log(`Application running on port ${port}`);
+  logger.log(`Swagger documentation available at http://localhost:${port}/api/docs`);
 }
 bootstrap();
