@@ -4,6 +4,10 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
 import { DatabaseModule } from './common/database/database.module';
+import { CacheModule } from './common/cache/cache.module';
+import { LoggingModule } from './common/logging/logging.module';
+import { AuditModule } from './common/audit/audit.module';
+import { TenantAwarePrismaService } from './common/database/tenant-aware-prisma.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
@@ -41,6 +45,13 @@ import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
 
     // Database
     DatabaseModule,
+
+    // Cache (Redis)
+    CacheModule,
+
+    // Logging & Audit
+    LoggingModule,
+    AuditModule,
 
     // Feature modules
     HealthModule,

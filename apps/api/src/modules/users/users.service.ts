@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/database/prisma.service';
+import { CacheService } from '../../common/cache/cache.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
+  ) {}
 
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({
@@ -63,7 +67,7 @@ export class UsersService {
   }
 
   async updateProfile(userId: string, data: { name?: string }) {
-    return this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id: userId },
       data,
       select: {
@@ -72,5 +76,10 @@ export class UsersService {
         name: true,
       },
     });
+
+    // Invalidate JWT cache for this user
+    await this.cache.invalidateUserJwt(userId);
+
+    return user;
   }
 }

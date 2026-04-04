@@ -127,7 +127,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
       },
-      tenants: memberships.map((m) => ({
+      tenants: memberships.map((m: { tenant: { id: string; name: string }; role: string }) => ({
         id: m.tenant.id,
         name: m.tenant.name,
         role: m.role,

@@ -26,7 +26,6 @@ export function useAuth() {
         tenant: data.tenant,
         tenants: data.tenants ?? [],
         accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
       });
 
       // If multiple tenants and none selected, redirect to tenant selection
@@ -55,7 +54,6 @@ export function useAuth() {
         tenant: responseData.tenant,
         tenants: responseData.tenants ?? [],
         accessToken: responseData.accessToken,
-        refreshToken: responseData.refreshToken,
       });
 
       router.push('/dashboard');
@@ -68,7 +66,7 @@ export function useAuth() {
     async (tenantId: string) => {
       const { data } = await authApi.switchTenant(tenantId);
 
-      setTenant(data.tenant, data.accessToken, data.refreshToken);
+      setTenant(data.tenant, data.accessToken);
       router.push('/dashboard');
 
       return data;
@@ -78,8 +76,7 @@ export function useAuth() {
 
   const logout = useCallback(async () => {
     try {
-      const refreshToken = useAuthStore.getState().refreshToken;
-      await authApi.logout(refreshToken ?? undefined);
+      await authApi.logout();
     } catch {
       // Ignore errors during logout
     } finally {

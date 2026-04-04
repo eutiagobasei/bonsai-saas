@@ -5,13 +5,17 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/database/prisma.service';
+import { CacheService } from '../../common/cache/cache.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { TenantRole } from '@prisma/client';
 
 @Injectable()
 export class TenantsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
+  ) {}
 
   async create(dto: CreateTenantDto, ownerId: string) {
     // Generate unique slug
@@ -198,6 +202,9 @@ export class TenantsService {
         },
       },
     });
+
+    // Invalidate JWT cache for removed member
+    await this.cache.invalidateTenantMemberJwt(memberId, tenantId);
   }
 
   async updateMemberRole(
@@ -223,7 +230,7 @@ export class TenantsService {
       throw new ForbiddenException('Cannot assign owner role');
     }
 
-    return this.prisma.tenantMember.update({
+    const updatedMember = await this.prisma.tenantMember.update({
       where: {
         userId_tenantId: {
           userId: memberId,
@@ -232,6 +239,11 @@ export class TenantsService {
       },
       data: { role },
     });
+
+    // Invalidate JWT cache for member whose role changed
+    await this.cache.invalidateTenantMemberJwt(memberId, tenantId);
+
+    return updatedMember;
   }
 
   async getMembers(tenantId: string) {
@@ -263,7 +275,7 @@ export class TenantsService {
       throw new ForbiddenException('Not a member of this tenant');
     }
 
-    if (![TenantRole.OWNER, TenantRole.ADMIN].includes(membership.role)) {
+    if (membership.role !== TenantRole.OWNER && membership.role !== TenantRole.ADMIN) {
       throw new ForbiddenException('Insufficient permissions');
     }
 
