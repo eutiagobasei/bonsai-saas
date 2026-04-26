@@ -59,9 +59,10 @@ export class AuthController {
   @ApiResponse({ status: 429, description: 'Too many registration attempts' })
   async register(
     @Body() dto: RegisterDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.authService.register(dto);
+    const result = await this.authService.register(dto, req);
     this.setAuthCookies(res, result.accessToken, result.refreshToken);
 
     // Return only non-sensitive data (tokens are in HttpOnly cookies)

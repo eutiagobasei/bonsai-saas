@@ -6,9 +6,41 @@ import {
 import { PrismaService } from '../database/prisma.service';
 
 /**
+ * Pagination limits for security (prevent DoS)
+ */
+export const PAGINATION_LIMITS = {
+  DEFAULT_PAGE_SIZE: 20,
+  MAX_PAGE_SIZE: 100,
+  DEFAULT_PAGE: 1,
+} as const;
+
+/**
+ * Pagination options for findAll queries
+ */
+export interface PaginationOptions {
+  page?: number;
+  limit?: number;
+}
+
+/**
+ * Paginated response wrapper
+ */
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
+
+/**
  * Filter options for findAll queries
  */
-export interface FilterOptions {
+export interface FilterOptions extends PaginationOptions {
   includeInactive?: boolean;
   [key: string]: unknown;
 }
@@ -90,7 +122,7 @@ export abstract class BaseCrudService<
   }
 
   /**
-   * Find all entities for a tenant
+   * Find all entities for a tenant (non-paginated, limited to MAX_PAGE_SIZE)
    */
   async findAll(tenantId: string, options?: FilterOptions): Promise<TEntity[]> {
     const where: Record<string, unknown> = { tenantId };
@@ -99,9 +131,9 @@ export abstract class BaseCrudService<
       where.isActive = true;
     }
 
-    // Add additional filters from options
+    // Add additional filters from options (exclude pagination keys)
     if (options) {
-      const { includeInactive, ...otherFilters } = options;
+      const { includeInactive, page, limit, ...otherFilters } = options;
       Object.entries(otherFilters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
           where[key] = value;
@@ -113,7 +145,65 @@ export abstract class BaseCrudService<
       where,
       orderBy: this.defaultOrderBy || { createdAt: 'desc' },
       include: this.findAllIncludes,
+      take: PAGINATION_LIMITS.MAX_PAGE_SIZE, // Security: limit max results
     });
+  }
+
+  /**
+   * Find all entities with pagination
+   */
+  async findAllPaginated(
+    tenantId: string,
+    options?: FilterOptions,
+  ): Promise<PaginatedResponse<TEntity>> {
+    const where: Record<string, unknown> = { tenantId };
+
+    if (!options?.includeInactive) {
+      where.isActive = true;
+    }
+
+    // Extract pagination options
+    const page = Math.max(1, options?.page || PAGINATION_LIMITS.DEFAULT_PAGE);
+    const limit = Math.min(
+      Math.max(1, options?.limit || PAGINATION_LIMITS.DEFAULT_PAGE_SIZE),
+      PAGINATION_LIMITS.MAX_PAGE_SIZE,
+    );
+    const skip = (page - 1) * limit;
+
+    // Add additional filters from options (exclude pagination keys)
+    if (options) {
+      const { includeInactive, page: _, limit: __, ...otherFilters } = options;
+      Object.entries(otherFilters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          where[key] = value;
+        }
+      });
+    }
+
+    const [data, total] = await Promise.all([
+      this.getModel().findMany({
+        where,
+        orderBy: this.defaultOrderBy || { createdAt: 'desc' },
+        include: this.findAllIncludes,
+        skip,
+        take: limit,
+      }),
+      this.getModel().count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   /**
