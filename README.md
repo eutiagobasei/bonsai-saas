@@ -1,394 +1,829 @@
-# My-SaaS Framework
+# Bonsai SaaS Framework
 
-A production-ready **multi-tenant SaaS framework** built with NestJS and Next.js. This is a **starter kit/boilerplate** designed to accelerate SaaS development with enterprise-grade patterns already in place.
+<div align="center">
 
-## What is This?
+**Grow your business organically**
 
-My-SaaS is a **framework**, not a finished application. It provides:
+Um framework SaaS multi-tenant pronto para produção, construído com NestJS e Next.js.
 
-- **Solid architectural foundation** for building multi-tenant SaaS applications
-- **Security patterns** implemented correctly from day one
-- **Extensible structure** that grows with your product
-- **DevOps ready** infrastructure with CI/CD and Docker
+[![Version](https://img.shields.io/badge/version-1.5.0-green.svg)](https://github.com/eutiagobasei/my-saas)
+[![NestJS](https://img.shields.io/badge/NestJS-10.x-red.svg)](https://nestjs.com)
+[![Next.js](https://img.shields.io/badge/Next.js-14.x-black.svg)](https://nextjs.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://postgresql.org)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-You build your product features on top of this foundation.
-
-## Framework Features
-
-### Core Infrastructure (Ready to Use)
-
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Multi-tenant Architecture | ✅ Complete | Schema-per-tenant + Row-Level Security |
-| Authentication | ✅ Complete | JWT with HttpOnly refresh tokens |
-| Authorization | ✅ Complete | Role-based (Owner, Admin, Member, Viewer) |
-| Rate Limiting | ✅ Complete | Global + per-endpoint throttling |
-| Audit Logging | ✅ Complete | Track sensitive operations |
-| Structured Logging | ✅ Complete | JSON logs with correlation IDs |
-| Caching Layer | ✅ Complete | Redis with in-memory fallback |
-| CI/CD Pipeline | ✅ Complete | GitHub Actions with security scanning |
-| Docker Setup | ✅ Complete | Multi-stage builds, non-root users |
-| Database Migrations | ✅ Complete | Safe Prisma workflows |
-
-### Extension Points (You Implement)
-
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Email Verification | 📝 Scaffold | Add your email provider |
-| Password Reset | 📝 Scaffold | Implement with your flow |
-| 2FA/MFA | 📝 Scaffold | Optional security enhancement |
-| Billing/Subscriptions | 📝 Scaffold | Integrate Stripe/Paddle |
-| File Uploads | 📝 Scaffold | Add S3/Cloudflare R2 |
-| Notifications | 📝 Scaffold | Email, push, in-app |
-| Frontend Pages | 📝 Scaffold | Build your UI |
-
-## Tech Stack
-
-| Layer | Technology | Version |
-|-------|------------|---------|
-| Backend | NestJS | 10.x |
-| Frontend | Next.js | 14.x |
-| Database | PostgreSQL | 16 |
-| ORM | Prisma | 5.x |
-| Cache | Redis | 7.x |
-| State | Zustand | 4.x |
-| Styling | Tailwind CSS | 3.x |
-| Build | Turbo (Monorepo) | 1.x |
-| Container | Docker | Latest |
-| Reverse Proxy | Traefik | Latest |
-
-## Project Structure
-
-```
-my-saas/
-├── .github/workflows/        # CI/CD pipelines
-│   ├── ci.yml               # Lint, test, build, security scan
-│   ├── deploy-dev.yml       # Deploy to DEV environment
-│   └── deploy-prod.yml      # Deploy to PROD environment
-│
-├── apps/
-│   ├── api/                  # NestJS Backend
-│   │   ├── src/
-│   │   │   ├── common/      # Shared: guards, decorators, interceptors
-│   │   │   │   ├── guards/         # JwtAuthGuard, TenantGuard, RolesGuard
-│   │   │   │   ├── decorators/     # @Public, @CurrentUser, @CurrentTenant
-│   │   │   │   ├── interceptors/   # TenantInterceptor
-│   │   │   │   ├── database/       # Prisma services, tenant-aware queries
-│   │   │   │   ├── cache/          # Redis caching service
-│   │   │   │   ├── logging/        # Structured JSON logger
-│   │   │   │   └── audit/          # Audit log service
-│   │   │   │
-│   │   │   └── modules/     # Feature modules
-│   │   │       ├── auth/           # Login, register, refresh, logout
-│   │   │       ├── users/          # User profile management
-│   │   │       ├── tenants/        # Tenant & member management
-│   │   │       └── health/         # Health check endpoint
-│   │   │
-│   │   ├── prisma/          # Database schema & migrations
-│   │   ├── test/            # Test files & fixtures
-│   │   └── scripts/         # Migration & backup scripts
-│   │
-│   └── web/                  # Next.js Frontend
-│       └── src/
-│           ├── app/         # App Router pages
-│           ├── components/  # React components
-│           ├── hooks/       # Custom hooks (useAuth)
-│           └── lib/         # API client, auth store
-│
-├── packages/                 # Shared packages (extend as needed)
-│   ├── types/               # Shared TypeScript types
-│   ├── ui/                  # Shared UI components
-│   └── utils/               # Shared utilities
-│
-└── infra/
-    ├── docker/              # Docker Compose (dev + prod)
-    ├── traefik/             # Reverse proxy config
-    └── scripts/             # Deploy, backup, setup scripts
-```
-
-## Quick Start
-
-### Prerequisites
-
-- Node.js 20+
-- Docker & Docker Compose
-- npm 10+
-
-### 1. Clone and Install
-
-```bash
-git clone https://github.com/your-username/my-saas.git
-cd my-saas
-npm install
-```
-
-### 2. Configure Environment
-
-```bash
-# API environment
-cp apps/api/.env.example apps/api/.env
-
-# Web environment
-cp apps/web/.env.local.example apps/web/.env.local
-```
-
-### 3. Start Services
-
-```bash
-# Start PostgreSQL and Redis
-npm run docker:up
-
-# Run database migrations
-npm run db:migrate
-
-# Start development servers
-npm run dev
-```
-
-### 4. Access
-
-- **API:** http://localhost:3000
-- **API Docs:** http://localhost:3000/api/docs
-- **Web:** http://localhost:3001
-
-## Multi-Tenant Architecture
-
-### Schema-per-Tenant Isolation
-
-```
-PostgreSQL Database
-├── public schema (shared)
-│   ├── users
-│   ├── tenants
-│   ├── tenant_members
-│   ├── refresh_tokens
-│   └── audit_logs
-│
-├── tenant_acme_corp (isolated)
-│   └── [your tenant-specific tables]
-│
-└── tenant_startup_xyz (isolated)
-    └── [your tenant-specific tables]
-```
-
-### Defense in Depth
-
-1. **Application Layer:** TenantGuard validates JWT tenant claims
-2. **Database Layer:** Row-Level Security policies enforce isolation
-3. **Schema Layer:** Each tenant has isolated PostgreSQL schema
-
-### Using Tenant Context
-
-```typescript
-// Controller with tenant isolation
-@Controller('products')
-@UseGuards(TenantGuard)
-export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
-
-  @Get()
-  async findAll(@CurrentTenant() tenantId: string) {
-    // tenantId is extracted from JWT and validated
-    return this.productsService.findByTenant(tenantId);
-  }
-
-  @Post()
-  @Roles('ADMIN', 'OWNER')
-  @UseGuards(RolesGuard)
-  async create(
-    @CurrentTenant() tenantId: string,
-    @CurrentUser() user: JwtPayload,
-    @Body() dto: CreateProductDto,
-  ) {
-    return this.productsService.create(tenantId, user.sub, dto);
-  }
-}
-```
-
-## Extending the Framework
-
-### Adding a New Module
-
-```bash
-# 1. Generate NestJS module
-cd apps/api
-npx nest generate module modules/products
-npx nest generate controller modules/products
-npx nest generate service modules/products
-
-# 2. Create DTOs with validation
-# 3. Add Prisma models
-# 4. Write tests
-```
-
-### Adding Email Verification (Example)
-
-```typescript
-// 1. Add to Prisma schema
-model EmailVerificationToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  expiresAt DateTime
-  user      User     @relation(fields: [userId], references: [id])
-}
-
-// 2. Create verification service
-@Injectable()
-export class EmailVerificationService {
-  async sendVerification(userId: string, email: string) {
-    const token = crypto.randomBytes(32).toString('hex');
-    await this.prisma.emailVerificationToken.create({
-      data: {
-        token,
-        userId,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      },
-    });
-    await this.emailService.send(email, 'verify', { token });
-  }
-}
-
-// 3. Add endpoint
-@Post('verify-email')
-@Public()
-async verifyEmail(@Body() dto: VerifyEmailDto) {
-  return this.emailVerificationService.verify(dto.token);
-}
-```
-
-### Adding a New Guard
-
-```typescript
-// src/common/guards/subscription.guard.ts
-@Injectable()
-export class SubscriptionGuard implements CanActivate {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const tenantId = request.user?.tenantId;
-
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { plan: true, status: true },
-    });
-
-    if (tenant?.status !== 'ACTIVE') {
-      throw new ForbiddenException('Tenant is suspended');
-    }
-
-    return true;
-  }
-}
-```
-
-## Security Best Practices
-
-### Already Implemented
-
-- ✅ JWT tokens with short expiry (15min access, 7d refresh)
-- ✅ HttpOnly cookies for refresh tokens
-- ✅ bcrypt with 12 rounds for password hashing
-- ✅ Rate limiting (3/1s, 20/10s, 100/60s)
-- ✅ CORS with strict origin validation
-- ✅ Input validation with class-validator
-- ✅ SQL injection prevention (Prisma parameterized queries)
-- ✅ Mass assignment protection (DTO whitelisting)
-
-### Recommended Additions
-
-```typescript
-// Hash refresh tokens before storing (recommended)
-const hashedToken = await bcrypt.hash(refreshToken, 10);
-await this.prisma.refreshToken.create({
-  data: { token: hashedToken, ... }
-});
-
-// Verify by comparing
-const isValid = await bcrypt.compare(providedToken, storedHash);
-```
-
-## Database Commands
-
-| Command | Environment | Description |
-|---------|-------------|-------------|
-| `npm run db:migrate` | Development | Create and apply migrations |
-| `npm run db:migrate:prod` | Production | Apply existing migrations only |
-| `npm run db:studio` | Development | Open Prisma Studio |
-| `npm run db:reset:force` | Development | Reset database (destructive) |
-
-## Deployment
-
-### Prerequisites
-
-1. VPS with Docker installed
-2. Domain with DNS configured
-3. GitHub secrets configured
-
-### Deploy to Production
-
-```bash
-# Via GitHub Actions (recommended)
-# Trigger deploy-prod.yml workflow with version tag
-
-# Or manually
-ssh user@your-vps
-cd /opt/my-saas/prod
-./deploy.sh v1.0.0
-```
-
-### Required GitHub Secrets
-
-| Secret | Description |
-|--------|-------------|
-| `PROD_HOST` | Production VPS hostname |
-| `PROD_USER` | SSH username |
-| `PROD_SSH_KEY` | SSH private key |
-| `PROD_API_URL` | https://api.yourdomain.com |
-
-## Testing
-
-```bash
-# Run all tests
-npm run test
-
-# Run with coverage
-npm run test:cov
-
-# Run e2e tests
-npm run test:e2e
-```
-
-## Scripts Reference
-
-| Script | Location | Purpose |
-|--------|----------|---------|
-| `migrate-safe.sh` | `apps/api/scripts/` | Migration with automatic backup |
-| `backup-db.sh` | `apps/api/scripts/` | Database backup |
-| `restore-db.sh` | `apps/api/scripts/` | Restore from backup |
-| `deploy.sh` | `infra/scripts/` | Deploy to VPS |
-| `setup-vps.sh` | `infra/scripts/` | Initial VPS setup |
-| `rotate-secret.sh` | `infra/scripts/` | Rotate secrets safely |
-
-## Roadmap
-
-- [ ] Email verification scaffold
-- [ ] Password reset scaffold
-- [ ] Stripe integration example
-- [ ] File upload with S3
-- [ ] WebSocket support
-- [ ] Background jobs with BullMQ
-- [ ] Admin dashboard
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on extending the framework.
-
-## License
-
-MIT License - See [LICENSE](LICENSE) for details.
+</div>
 
 ---
 
-**Built with** NestJS, Next.js, Prisma, PostgreSQL, Redis, Docker, and Traefik.
+## O que é o Bonsai?
+
+Bonsai é um **framework/boilerplate** para construir aplicações SaaS multi-tenant. Não é uma aplicação pronta - é uma **base sólida** com padrões de segurança, autenticação e arquitetura já implementados para você construir seu produto em cima.
+
+### Para quem é?
+
+- **Desenvolvedores** que querem criar um SaaS sem reinventar a roda
+- **Startups** que precisam de uma base segura e escalável
+- **Agências** que desenvolvem produtos SaaS para clientes
+
+### O que vem pronto?
+
+| Funcionalidade | Status | O que faz |
+|----------------|--------|-----------|
+| Multi-tenancy | ✅ | Cada cliente tem seus dados isolados |
+| Autenticação | ✅ | Login, registro, refresh token |
+| Autorização | ✅ | Roles: Owner, Admin, Member, Viewer |
+| CRUD Abstrato | ✅ | Base para criar CRUDs rapidamente |
+| Rate Limiting | ✅ | Proteção contra abuso de API |
+| Logs Estruturados | ✅ | Logs em JSON para análise |
+| Cache Redis | ✅ | Performance otimizada |
+| Docker | ✅ | Ambiente de dev e prod |
+| CI/CD | ✅ | GitHub Actions configurado |
+
+---
+
+## Início Rápido (5 minutos)
+
+### Pré-requisitos
+
+- **Node.js 20+** - [Baixar](https://nodejs.org)
+- **Docker Desktop** - [Baixar](https://docker.com/products/docker-desktop)
+- **Git** - [Baixar](https://git-scm.com)
+
+### Passo 1: Clone o projeto
+
+```bash
+git clone https://github.com/eutiagobasei/my-saas.git
+cd my-saas
+```
+
+### Passo 2: Instale as dependências
+
+```bash
+npm install
+```
+
+### Passo 3: Configure o ambiente
+
+```bash
+# Copie os arquivos de exemplo
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.local.example apps/web/.env.local
+```
+
+### Passo 4: Suba o banco de dados
+
+```bash
+# Inicia PostgreSQL e Redis no Docker
+npm run docker:up
+
+# Aguarde alguns segundos e rode as migrations
+npm run db:migrate
+```
+
+### Passo 5: Inicie os servidores
+
+```bash
+npm run dev
+```
+
+### Pronto! Acesse:
+
+| Serviço | URL | Descrição |
+|---------|-----|-----------|
+| **Frontend** | http://localhost:3001 | Interface do usuário |
+| **API** | http://localhost:3000 | Backend REST |
+| **API Docs** | http://localhost:3000/api/docs | Swagger/OpenAPI |
+
+---
+
+## Entendendo a Arquitetura
+
+### Estrutura de Pastas
+
+```
+bonsai/
+├── apps/
+│   ├── api/                 # 🔧 Backend NestJS
+│   │   ├── src/
+│   │   │   ├── common/      # Código compartilhado
+│   │   │   │   ├── crud/    # BaseCrudService
+│   │   │   │   ├── guards/  # Autenticação/Autorização
+│   │   │   │   └── database/# Prisma + Multi-tenant
+│   │   │   └── modules/     # Funcionalidades
+│   │   │       ├── auth/    # Login, registro
+│   │   │       ├── tenants/ # Gestão de organizações
+│   │   │       └── users/   # Gestão de usuários
+│   │   └── prisma/          # Schema do banco
+│   │
+│   └── web/                 # 🎨 Frontend Next.js
+│       └── src/
+│           ├── app/         # Páginas (App Router)
+│           ├── components/  # Componentes React
+│           ├── hooks/       # useCrudPage, useAuth
+│           └── lib/         # API client, utils
+│
+└── infra/
+    └── docker/              # Docker Compose
+```
+
+---
+
+## O que é Multi-Tenancy? (Explicação Simples)
+
+Imagine que você criou um software de gestão. Agora três empresas querem usar:
+- Empresa A (Padaria)
+- Empresa B (Pet Shop)
+- Empresa C (Consultoria)
+
+**Problema:** Como garantir que a Padaria não veja os dados do Pet Shop?
+
+**Solução Multi-tenant:** Cada empresa é um "tenant" (inquilino). O Bonsai garante que:
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    Banco de Dados                    │
+├─────────────────────────────────────────────────────┤
+│  Dados da Padaria     │  Dados do Pet Shop          │
+│  - produtos           │  - produtos                  │
+│  - vendas             │  - vendas                    │
+│  - clientes           │  - clientes                  │
+│                       │                              │
+│  🔒 ISOLADO           │  🔒 ISOLADO                  │
+└─────────────────────────────────────────────────────┘
+```
+
+### Como funciona no código?
+
+Toda tabela que precisa de isolamento tem uma coluna `tenantId`:
+
+```sql
+-- Exemplo: tabela de produtos
+CREATE TABLE products (
+  id          TEXT PRIMARY KEY,
+  tenant_id   TEXT NOT NULL,  -- 👈 Identifica o dono
+  name        TEXT NOT NULL,
+  price       DECIMAL(10,2)
+);
+```
+
+O framework **automaticamente** filtra por tenant:
+- Usuário da Padaria faz login → vê só produtos da Padaria
+- Usuário do Pet Shop faz login → vê só produtos do Pet Shop
+
+---
+
+## Criando seu Primeiro CRUD (Tutorial Completo)
+
+Vamos criar um módulo de **Produtos** passo a passo.
+
+### Passo 1: Adicione o modelo no Prisma
+
+Edite `apps/api/prisma/schema.prisma`:
+
+```prisma
+model Product {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  stock       Int      @default(0)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("products")
+}
+```
+
+Rode a migration:
+
+```bash
+npm run db:migrate
+```
+
+### Passo 2: Crie os DTOs (Data Transfer Objects)
+
+Crie `apps/api/src/modules/products/dto/create-product.dto.ts`:
+
+```typescript
+import { IsString, IsNumber, IsOptional, Min, MaxLength } from 'class-validator';
+
+export class CreateProductDto {
+  @IsString()
+  @MaxLength(100)
+  name: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string;
+
+  @IsNumber()
+  @Min(0)
+  price: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  stock?: number;
+}
+```
+
+Crie `apps/api/src/modules/products/dto/update-product.dto.ts`:
+
+```typescript
+import { PartialType } from '@nestjs/swagger';
+import { IsOptional, IsBoolean } from 'class-validator';
+import { CreateProductDto } from './create-product.dto';
+
+export class UpdateProductDto extends PartialType(CreateProductDto) {
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+```
+
+### Passo 3: Crie o Service (apenas 20 linhas!)
+
+Crie `apps/api/src/modules/products/products.service.ts`:
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../common/database/prisma.service';
+import { BaseCrudService } from '../../common/crud';
+import { Product } from '@prisma/client';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
+
+@Injectable()
+export class ProductsService extends BaseCrudService<
+  Product,
+  CreateProductDto,
+  UpdateProductDto
+> {
+  // Nome do modelo no Prisma
+  protected readonly modelName = 'product';
+
+  // Campo único por tenant (evita duplicatas)
+  protected readonly uniqueField = 'name';
+
+  // Ordenação padrão
+  protected readonly defaultOrderBy = { name: 'asc' as const };
+
+  constructor(prisma: PrismaService) {
+    super(prisma);
+  }
+}
+```
+
+**É só isso!** O `BaseCrudService` já fornece:
+- `create()` - Criar produto
+- `findAll()` - Listar produtos
+- `findById()` - Buscar por ID
+- `update()` - Atualizar
+- `delete()` - Remover
+
+### Passo 4: Crie o Controller
+
+Crie `apps/api/src/modules/products/products.controller.ts`:
+
+```typescript
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ProductsService } from './products.service';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
+import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
+import { TenantGuard } from '../../common/guards/tenant.guard';
+
+@ApiTags('products')
+@ApiBearerAuth('JWT-auth')
+@Controller('products')
+@UseGuards(TenantGuard)  // 👈 Garante isolamento por tenant
+export class ProductsController {
+  constructor(private readonly service: ProductsService) {}
+
+  @Post()
+  create(
+    @CurrentTenant() tenantId: string,  // 👈 Injetado automaticamente
+    @Body() dto: CreateProductDto,
+  ) {
+    return this.service.create(tenantId, dto);
+  }
+
+  @Get()
+  findAll(
+    @CurrentTenant() tenantId: string,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
+    return this.service.findAll(tenantId, {
+      includeInactive: includeInactive === 'true'
+    });
+  }
+
+  @Get(':id')
+  findById(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.service.findById(tenantId, id);
+  }
+
+  @Patch(':id')
+  update(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateProductDto,
+  ) {
+    return this.service.update(tenantId, id, dto);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  delete(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.service.delete(tenantId, id);
+  }
+}
+```
+
+### Passo 5: Crie o Module e Registre
+
+Crie `apps/api/src/modules/products/products.module.ts`:
+
+```typescript
+import { Module } from '@nestjs/common';
+import { ProductsController } from './products.controller';
+import { ProductsService } from './products.service';
+
+@Module({
+  controllers: [ProductsController],
+  providers: [ProductsService],
+  exports: [ProductsService],
+})
+export class ProductsModule {}
+```
+
+Adicione em `apps/api/src/app.module.ts`:
+
+```typescript
+import { ProductsModule } from './modules/products/products.module';
+
+@Module({
+  imports: [
+    // ... outros imports
+    ProductsModule,  // 👈 Adicione aqui
+  ],
+})
+export class AppModule {}
+```
+
+### Pronto! Teste sua API
+
+```bash
+# Criar produto
+curl -X POST http://localhost:3000/products \
+  -H "Authorization: Bearer SEU_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Produto Teste", "price": 29.90}'
+
+# Listar produtos
+curl http://localhost:3000/products \
+  -H "Authorization: Bearer SEU_TOKEN"
+```
+
+---
+
+## Criando a Página no Frontend
+
+### Passo 1: Adicione o API Client
+
+Em `apps/web/src/lib/api.ts`, adicione:
+
+```typescript
+// Tipos
+export interface Product {
+  id: string;
+  tenantId: string;
+  name: string;
+  description?: string;
+  price: number;
+  stock: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateProductData {
+  name: string;
+  description?: string;
+  price: number;
+  stock?: number;
+}
+
+export interface UpdateProductData extends Partial<CreateProductData> {
+  isActive?: boolean;
+}
+
+// API Client
+export const productApi = createCrudApi<Product>('/products');
+```
+
+### Passo 2: Crie a Página
+
+Crie `apps/web/src/app/(dashboard)/products/page.tsx`:
+
+```tsx
+'use client';
+
+import { productApi, Product, CreateProductData } from '@/lib/api';
+import { useCrudPage } from '@/hooks/use-crud-page';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
+import { PackageIcon } from '@/components/icons';
+import {
+  CrudPageHeader,
+  CrudEmptyState,
+  CrudDeleteModal,
+  CrudLoadingState,
+  CrudErrorAlert,
+} from '@/components/crud';
+import { formatCurrency } from '@/lib/utils';
+
+export default function ProductsPage() {
+  // Hook mágico que gerencia todo o CRUD
+  const crud = useCrudPage<Product, CreateProductData>({
+    api: productApi,
+    entityName: 'produto',
+    defaultFormData: { name: '', description: '', price: 0, stock: 0 },
+  });
+
+  if (crud.isLoading) return <CrudLoadingState />;
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <CrudPageHeader
+        title="Produtos"
+        description="Gerencie seus produtos"
+        createLabel="Novo Produto"
+        onCreateClick={crud.openCreateModal}
+      />
+
+      {/* Erro */}
+      {crud.error && <CrudErrorAlert message={crud.error} />}
+
+      {/* Lista ou Estado Vazio */}
+      {crud.items.length === 0 ? (
+        <CrudEmptyState
+          icon={<PackageIcon className="w-12 h-12" />}
+          title="Nenhum produto"
+          description="Comece adicionando seu primeiro produto."
+          createLabel="Novo Produto"
+          onCreateClick={crud.openCreateModal}
+        />
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {crud.items.map((product) => (
+            <div
+              key={product.id}
+              className="p-4 border rounded-lg hover:border-primary-500"
+            >
+              <h3 className="font-semibold">{product.name}</h3>
+              <p className="text-sm text-gray-500">{product.description}</p>
+              <p className="mt-2 text-lg font-bold text-primary-600">
+                {formatCurrency(product.price)}
+              </p>
+              <p className="text-sm text-gray-400">
+                Estoque: {product.stock}
+              </p>
+              <div className="flex gap-2 mt-4">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => crud.openEditModal(product)}
+                >
+                  Editar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={() => crud.confirmDelete(product)}
+                >
+                  Excluir
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal de Criar/Editar */}
+      <Modal
+        isOpen={crud.isModalOpen}
+        onClose={crud.closeModal}
+        title={crud.editingItem ? 'Editar Produto' : 'Novo Produto'}
+      >
+        <form onSubmit={crud.handleSubmit} className="space-y-4">
+          <Input
+            label="Nome"
+            value={crud.formData.name}
+            onChange={(e) => crud.updateFormField('name', e.target.value)}
+            required
+          />
+          <Input
+            label="Descrição"
+            value={crud.formData.description || ''}
+            onChange={(e) => crud.updateFormField('description', e.target.value)}
+          />
+          <Input
+            label="Preço"
+            type="number"
+            step="0.01"
+            min="0"
+            value={crud.formData.price}
+            onChange={(e) => crud.updateFormField('price', parseFloat(e.target.value))}
+            required
+          />
+          <Input
+            label="Estoque"
+            type="number"
+            min="0"
+            value={crud.formData.stock || 0}
+            onChange={(e) => crud.updateFormField('stock', parseInt(e.target.value))}
+          />
+          <div className="flex justify-end gap-3 pt-4">
+            <Button type="button" variant="secondary" onClick={crud.closeModal}>
+              Cancelar
+            </Button>
+            <Button type="submit" isLoading={crud.isSaving}>
+              {crud.editingItem ? 'Salvar' : 'Criar'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <CrudDeleteModal
+        isOpen={!!crud.deleteConfirm}
+        onClose={crud.cancelDelete}
+        onConfirm={crud.handleDelete}
+        isDeleting={crud.isDeleting}
+        entityName="o produto"
+        itemName={crud.deleteConfirm?.name}
+      />
+    </div>
+  );
+}
+```
+
+### Passo 3: Adicione ao Menu
+
+Em `apps/web/src/components/layout/Sidebar.tsx`:
+
+```typescript
+const menuItems = [
+  // ... outros itens
+  { name: 'Produtos', href: '/products', icon: PackageIcon },
+];
+```
+
+---
+
+## Personalizando Validações
+
+O `BaseCrudService` tem hooks que você pode sobrescrever:
+
+```typescript
+@Injectable()
+export class ProductsService extends BaseCrudService<...> {
+  // ... código anterior
+
+  /**
+   * Validação antes de criar
+   */
+  protected async validateCreate(tenantId: string, dto: CreateProductDto): Promise<void> {
+    if (dto.price < 0) {
+      throw new BadRequestException('Preço não pode ser negativo');
+    }
+  }
+
+  /**
+   * Validação antes de atualizar
+   */
+  protected async validateUpdate(
+    tenantId: string,
+    id: string,
+    dto: UpdateProductDto,
+    existing: Product,
+  ): Promise<void> {
+    // Exemplo: não permitir reduzir estoque abaixo de zero
+    if (dto.stock !== undefined && dto.stock < 0) {
+      throw new BadRequestException('Estoque não pode ser negativo');
+    }
+  }
+
+  /**
+   * Validação antes de deletar
+   */
+  protected async validateDelete(tenantId: string, id: string): Promise<void> {
+    // Exemplo: verificar se produto tem vendas
+    const salesCount = await this.prisma.sale.count({
+      where: { productId: id },
+    });
+
+    if (salesCount > 0) {
+      throw new BadRequestException(
+        `Produto tem ${salesCount} vendas. Remova as vendas primeiro.`
+      );
+    }
+  }
+}
+```
+
+---
+
+## Segurança (Já Implementado)
+
+O Bonsai vem com múltiplas camadas de proteção:
+
+### Autenticação
+
+```
+Usuário faz login
+       ↓
+┌──────────────────────┐
+│ JWT Access Token     │ ← Expira em 15 minutos
+│ (enviado no header)  │
+└──────────────────────┘
+       +
+┌──────────────────────┐
+│ Refresh Token        │ ← Expira em 7 dias
+│ (cookie HttpOnly)    │ ← JavaScript não consegue acessar
+└──────────────────────┘
+```
+
+### Isolamento de Dados (Defense in Depth)
+
+```
+Request com Token JWT
+        ↓
+┌─────────────────────┐
+│ 1. JWT Guard        │ → Verifica se token é válido
+└─────────────────────┘
+        ↓
+┌─────────────────────┐
+│ 2. Tenant Guard     │ → Verifica se user pertence ao tenant
+└─────────────────────┘
+        ↓
+┌─────────────────────┐
+│ 3. Interceptor      │ → Configura contexto do tenant
+└─────────────────────┘
+        ↓
+┌─────────────────────┐
+│ 4. Prisma Middleware│ → Filtra automaticamente por tenantId
+└─────────────────────┘
+        ↓
+   Dados do Tenant
+```
+
+### Rate Limiting
+
+| Janela | Limite | Descrição |
+|--------|--------|-----------|
+| 1 segundo | 3 requests | Proteção contra flood |
+| 10 segundos | 20 requests | Uso normal |
+| 60 segundos | 100 requests | Limite geral |
+
+---
+
+## Comandos Úteis
+
+### Desenvolvimento
+
+```bash
+npm run dev           # Inicia API + Web
+npm run docker:up     # Sobe PostgreSQL + Redis
+npm run docker:down   # Para os containers
+npm run db:migrate    # Roda migrations
+npm run db:studio     # Abre Prisma Studio (GUI do banco)
+```
+
+### Qualidade
+
+```bash
+npm run lint          # Verifica erros de código
+npm run type-check    # Verifica tipos TypeScript
+npm run test          # Roda testes
+npm run test:cov      # Testes com cobertura
+```
+
+### Produção
+
+```bash
+npm run build         # Compila para produção
+npm run start         # Inicia em modo produção
+```
+
+---
+
+## Histórico de Versões
+
+| Versão | Nome | Principais Features |
+|--------|------|---------------------|
+| **1.5.0** | Bonsai Branding | Configuração centralizada de marca |
+| **1.4.0** | Multi-Tenant Schema Isolation | Funções RLS, correção do interceptor |
+| **1.3.0** | SaaS REST Security | Checklist 10/10 de segurança |
+| **1.1.0** | Security Framework & CRUD | BaseCrudService, abstrações |
+| **1.0.0** | Initial Release | Framework base |
+
+---
+
+## Estrutura do Banco
+
+```
+PostgreSQL (saas_dev)
+│
+├── public schema (compartilhado)
+│   ├── users            → Usuários do sistema
+│   ├── tenants          → Organizações/Empresas
+│   ├── tenant_members   → Relação usuário ↔ tenant
+│   ├── refresh_tokens   → Tokens de renovação
+│   ├── sessions         → Sessões ativas
+│   └── audit_logs       → Log de operações sensíveis
+│
+├── tenant_empresa_a schema (isolado)
+│   └── [suas tabelas de negócio]
+│
+└── tenant_empresa_b schema (isolado)
+    └── [suas tabelas de negócio]
+```
+
+---
+
+## FAQ
+
+### Posso usar com outro banco de dados?
+
+O Prisma suporta PostgreSQL, MySQL, SQLite e SQL Server. Para trocar, altere o `provider` no `schema.prisma` e ajuste o `DATABASE_URL`.
+
+### Como faço deploy?
+
+O projeto já vem com GitHub Actions configurado. Veja `.github/workflows/` para CI/CD.
+
+### Onde configuro o nome/marca?
+
+Edite os arquivos de branding:
+- Backend: `apps/api/src/config/branding.ts`
+- Frontend: `apps/web/src/config/branding.ts`
+
+### Como adiciono autenticação social (Google, GitHub)?
+
+O NestJS Passport facilita isso. Crie uma nova strategy em `apps/api/src/modules/auth/strategies/`.
+
+---
+
+## Contribuindo
+
+1. Fork o projeto
+2. Crie uma branch (`git checkout -b feature/nova-feature`)
+3. Commit suas mudanças (`git commit -m 'feat: adiciona nova feature'`)
+4. Push para a branch (`git push origin feature/nova-feature`)
+5. Abra um Pull Request
+
+---
+
+## Licença
+
+MIT License - veja [LICENSE](LICENSE) para detalhes.
+
+---
+
+<div align="center">
+
+**Feito com** NestJS, Next.js, Prisma, PostgreSQL, Redis e Docker.
+
+[Documentação](wiki/) · [Reportar Bug](https://github.com/eutiagobasei/my-saas/issues) · [Solicitar Feature](https://github.com/eutiagobasei/my-saas/issues)
+
+</div>
