@@ -7,11 +7,13 @@ import { DatabaseModule } from './common/database/database.module';
 import { CacheModule } from './common/cache/cache.module';
 import { LoggingModule } from './common/logging/logging.module';
 import { AuditModule } from './common/audit/audit.module';
-import { TenantAwarePrismaService } from './common/database/tenant-aware-prisma.service';
+import { SecurityModule } from './common/security';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { HealthModule } from './modules/health/health.module';
+import { SupplyCategoriesModule } from './modules/supply-categories/supply-categories.module';
+import { SuppliesModule } from './modules/supplies/supplies.module';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
@@ -53,11 +55,16 @@ import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
     LoggingModule,
     AuditModule,
 
+    // Security (Secrets & Encryption)
+    SecurityModule,
+
     // Feature modules
     HealthModule,
     AuthModule,
     UsersModule,
     TenantsModule,
+    SupplyCategoriesModule,
+    SuppliesModule,
   ],
   providers: [
     // Global Rate Limiting Guard

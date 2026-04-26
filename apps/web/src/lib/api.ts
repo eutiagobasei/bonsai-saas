@@ -1,27 +1,21 @@
 import axios from 'axios';
 import { useAuthStore } from './auth-store';
 
+/**
+ * Axios instance configured for secure API communication.
+ *
+ * SECURITY: Authentication is handled via HttpOnly cookies.
+ * - Access tokens are sent automatically via cookies (not visible to JS)
+ * - No Authorization header needed (tokens protected from XSS)
+ * - withCredentials: true ensures cookies are sent with cross-origin requests
+ */
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Include cookies in requests
+  withCredentials: true, // Include HttpOnly cookies in requests
 });
-
-// Request interceptor to add auth token from memory
-api.interceptors.request.use(
-  (config) => {
-    if (typeof window !== 'undefined') {
-      const { accessToken } = useAuthStore.getState();
-      if (accessToken) {
-        config.headers.Authorization = `Bearer ${accessToken}`;
-      }
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 // Response interceptor to handle token refresh
 api.interceptors.response.use(
@@ -29,24 +23,19 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // If 401 and not already retrying
+    // If 401 and not already retrying, attempt token refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
-        // Refresh token is sent automatically via HttpOnly cookie
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`,
+        // Refresh tokens via HttpOnly cookie (automatic)
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/auth/refresh`,
           {},
           { withCredentials: true }
         );
 
-        const { accessToken } = response.data;
-
-        // Update access token in memory store
-        useAuthStore.getState().setAccessToken(accessToken);
-
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        // New access token is set via HttpOnly cookie, retry original request
         return api(originalRequest);
       } catch (refreshError) {
         // Refresh failed, clear auth state and redirect to login
@@ -63,6 +52,38 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+// CRUD API Factory
+export interface CrudApi<T, CreateDto = Partial<T>, UpdateDto = Partial<T>> {
+  getAll: (options?: Record<string, unknown>) => Promise<{ data: T[] }>;
+  getById: (id: string) => Promise<{ data: T }>;
+  create: (data: CreateDto) => Promise<{ data: T }>;
+  update: (id: string, data: UpdateDto) => Promise<{ data: T }>;
+  delete: (id: string) => Promise<void>;
+}
+
+export function createCrudApi<T, CreateDto = Partial<T>, UpdateDto = Partial<T>>(
+  basePath: string
+): CrudApi<T, CreateDto, UpdateDto> {
+  return {
+    getAll: (options?: Record<string, unknown>) => {
+      const params = new URLSearchParams();
+      if (options) {
+        Object.entries(options).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            params.append(key, String(value));
+          }
+        });
+      }
+      const queryString = params.toString();
+      return api.get<T[]>(`${basePath}${queryString ? `?${queryString}` : ''}`);
+    },
+    getById: (id: string) => api.get<T>(`${basePath}/${id}`),
+    create: (data: CreateDto) => api.post<T>(basePath, data),
+    update: (id: string, data: UpdateDto) => api.patch<T>(`${basePath}/${id}`, data),
+    delete: (id: string) => api.delete(`${basePath}/${id}`),
+  };
+}
 
 // Auth API
 export const authApi = {
@@ -98,4 +119,96 @@ export const tenantApi = {
     api.patch(`/tenants/current/members/${memberId}/role`, { role }),
   update: (data: { name?: string }) => api.patch('/tenants/current', data),
   create: (name: string) => api.post('/tenants', { name }),
+};
+
+// Supply Category API
+export interface SupplyCategory {
+  id: string;
+  tenantId: string;
+  name: string;
+  description?: string;
+  color?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    supplies: number;
+  };
+}
+
+export interface CreateSupplyCategoryData {
+  name: string;
+  description?: string;
+  color?: string;
+}
+
+export interface UpdateSupplyCategoryData {
+  name?: string;
+  description?: string;
+  color?: string;
+  isActive?: boolean;
+}
+
+export const supplyCategoryApi = {
+  getAll: (options?: { includeInactive?: boolean } | boolean) => {
+    const includeInactive = typeof options === 'boolean' ? options : options?.includeInactive;
+    return api.get<SupplyCategory[]>(`/supply-categories?includeInactive=${includeInactive ?? false}`);
+  },
+  getById: (id: string) =>
+    api.get<SupplyCategory>(`/supply-categories/${id}`),
+  create: (data: CreateSupplyCategoryData) =>
+    api.post<SupplyCategory>('/supply-categories', data),
+  update: (id: string, data: UpdateSupplyCategoryData) =>
+    api.patch<SupplyCategory>(`/supply-categories/${id}`, data),
+  delete: (id: string) =>
+    api.delete(`/supply-categories/${id}`),
+};
+
+// Supply API
+export interface Supply {
+  id: string;
+  tenantId: string;
+  categoryId: string;
+  name: string;
+  description?: string;
+  unit: string;
+  minStock?: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  category: SupplyCategory;
+}
+
+export interface CreateSupplyData {
+  name: string;
+  categoryId: string;
+  unit: string;
+  description?: string;
+  minStock?: number;
+}
+
+export interface UpdateSupplyData {
+  name?: string;
+  categoryId?: string;
+  unit?: string;
+  description?: string;
+  minStock?: number;
+  isActive?: boolean;
+}
+
+export const supplyApi = {
+  getAll: (options?: { categoryId?: string; includeInactive?: boolean }) => {
+    const params = new URLSearchParams();
+    if (options?.categoryId) params.append('categoryId', options.categoryId);
+    if (options?.includeInactive) params.append('includeInactive', 'true');
+    return api.get<Supply[]>(`/supplies?${params.toString()}`);
+  },
+  getById: (id: string) =>
+    api.get<Supply>(`/supplies/${id}`),
+  create: (data: CreateSupplyData) =>
+    api.post<Supply>('/supplies', data),
+  update: (id: string, data: UpdateSupplyData) =>
+    api.patch<Supply>(`/supplies/${id}`, data),
+  delete: (id: string) =>
+    api.delete(`/supplies/${id}`),
 };

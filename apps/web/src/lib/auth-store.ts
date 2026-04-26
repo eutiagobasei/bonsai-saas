@@ -17,7 +17,6 @@ interface AuthState {
   user: User | null;
   tenant: Tenant | null;
   tenants: Tenant[];
-  accessToken: string | null;
   isAuthenticated: boolean;
 
   // Actions
@@ -25,21 +24,25 @@ interface AuthState {
     user: User;
     tenant?: Tenant;
     tenants?: Tenant[];
-    accessToken: string;
   }) => void;
-  setAccessToken: (accessToken: string) => void;
-  setTenant: (tenant: Tenant, accessToken: string) => void;
+  setTenant: (tenant: Tenant) => void;
   setTenants: (tenants: Tenant[]) => void;
   logout: () => void;
 }
 
+/**
+ * Auth store for user/tenant state.
+ *
+ * SECURITY: Access tokens are stored in HttpOnly cookies, not in JavaScript.
+ * This prevents XSS attacks from stealing tokens via DevTools or malicious scripts.
+ * The frontend only stores non-sensitive user metadata.
+ */
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
       tenant: null,
       tenants: [],
-      accessToken: null,
       isAuthenticated: false,
 
       setAuth: (data) => {
@@ -47,20 +50,12 @@ export const useAuthStore = create<AuthState>()(
           user: data.user,
           tenant: data.tenant ?? null,
           tenants: data.tenants ?? [],
-          accessToken: data.accessToken,
           isAuthenticated: true,
         });
       },
 
-      setAccessToken: (accessToken) => {
-        set({ accessToken });
-      },
-
-      setTenant: (tenant, accessToken) => {
-        set({
-          tenant,
-          accessToken,
-        });
+      setTenant: (tenant) => {
+        set({ tenant });
       },
 
       setTenants: (tenants) => {
@@ -72,19 +67,17 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           tenant: null,
           tenants: [],
-          accessToken: null,
           isAuthenticated: false,
         });
       },
     }),
     {
       name: 'auth-storage',
-      storage: createJSONStorage(() => sessionStorage), // Use sessionStorage instead of localStorage for better security
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         user: state.user,
         tenant: state.tenant,
         tenants: state.tenants,
-        accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }

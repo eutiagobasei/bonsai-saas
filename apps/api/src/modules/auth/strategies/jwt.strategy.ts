@@ -2,14 +2,39 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
+import { Request } from 'express';
 
 import { PrismaService } from '../../../common/database/prisma.service';
 import { CacheService } from '../../../common/cache/cache.service';
 import { TokenPayload } from '../auth.service';
+import { COOKIE_NAMES } from '../../../common/security';
+
+/**
+ * Extracts JWT token with the following priority:
+ * 1. HttpOnly cookie (secure, preferred for browser clients)
+ * 2. Authorization header (for API clients, CLI tools)
+ */
+function extractJwtFromCookieOrHeader(req: Request): string | null {
+  // First, try to extract from HttpOnly cookie (most secure for browsers)
+  const cookieToken = req.cookies?.[COOKIE_NAMES.ACCESS_TOKEN];
+  if (cookieToken) {
+    return cookieToken;
+  }
+
+  // Fallback to Authorization header for API clients
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+
+  return null;
+}
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  private readonly cacheTtl = 5 * 60 * 1000; // 5 minutes
+  // Short cache TTL for security - revoked users will be blocked within 30 seconds
+  // Trade-off: More database lookups vs faster revocation
+  private readonly cacheTtl = 30 * 1000; // 30 seconds
 
   constructor(
     configService: ConfigService,
@@ -17,7 +42,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly cache: CacheService,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: extractJwtFromCookieOrHeader,
       ignoreExpiration: false,
       secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
     });

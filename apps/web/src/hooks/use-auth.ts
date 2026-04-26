@@ -21,11 +21,11 @@ export function useAuth() {
     async (email: string, password: string) => {
       const { data } = await authApi.login(email, password);
 
+      // Token is set via HttpOnly cookie, only store user metadata
       setAuth({
         user: data.user,
         tenant: data.tenant,
         tenants: data.tenants ?? [],
-        accessToken: data.accessToken,
       });
 
       // If multiple tenants and none selected, redirect to tenant selection
@@ -49,11 +49,11 @@ export function useAuth() {
     }) => {
       const { data: responseData } = await authApi.register(data);
 
+      // Token is set via HttpOnly cookie, only store user metadata
       setAuth({
         user: responseData.user,
         tenant: responseData.tenant,
         tenants: responseData.tenants ?? [],
-        accessToken: responseData.accessToken,
       });
 
       router.push('/dashboard');
@@ -66,7 +66,8 @@ export function useAuth() {
     async (tenantId: string) => {
       const { data } = await authApi.switchTenant(tenantId);
 
-      setTenant(data.tenant, data.accessToken);
+      // Token is set via HttpOnly cookie, only update tenant metadata
+      setTenant(data.tenant);
       router.push('/dashboard');
 
       return data;

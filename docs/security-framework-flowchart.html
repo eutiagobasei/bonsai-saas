@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My-SaaS Security Framework</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 12mm;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.4;
+            padding: 20px;
+        }
+
+        .page {
+            background: white;
+            max-width: 210mm;
+            margin: 0 auto 30px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            page-break-after: always;
+        }
+
+        .page:last-child {
+            page-break-after: avoid;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a1a2e;
+            font-size: 22px;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 3px solid #4361ee;
+        }
+
+        h2 {
+            color: #4361ee;
+            font-size: 14px;
+            margin: 15px 0 10px;
+            padding: 6px 10px;
+            background: linear-gradient(90deg, #4361ee15, transparent);
+            border-left: 4px solid #4361ee;
+        }
+
+        h3 {
+            color: #1a1a2e;
+            font-size: 12px;
+            margin: 12px 0 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 11px;
+        }
+
+        .flow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .flow-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .box {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 10px;
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .box-browser {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .box-api {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            color: white;
+        }
+
+        .box-guard {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+
+        .box-service {
+            background: linear-gradient(135deg, #4361ee, #3f37c9);
+            color: white;
+        }
+
+        .arrow {
+            font-size: 18px;
+            color: #4361ee;
+        }
+
+        .step-number {
+            background: #4361ee;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            flex: 1;
+            font-size: 10px;
+            padding: 6px 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 3px solid #4361ee;
+        }
+
+        .layers-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 12px 0;
+        }
+
+        .layer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 10px;
+        }
+
+        .layer-num {
+            background: white;
+            color: #333;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 9px;
+        }
+
+        .layer-1 { background: linear-gradient(90deg, #667eea, #764ba2); color: white; }
+        .layer-2 { background: linear-gradient(90deg, #f093fb, #f5576c); color: white; }
+        .layer-3 { background: linear-gradient(90deg, #4361ee, #3f37c9); color: white; }
+        .layer-4 { background: linear-gradient(90deg, #11998e, #38ef7d); color: white; }
+        .layer-5 { background: linear-gradient(90deg, #fa709a, #fee140); color: #333; }
+        .layer-6 { background: linear-gradient(90deg, #30cfd0, #330867); color: white; }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 9px;
+        }
+
+        .comparison-table th {
+            background: #4361ee;
+            color: white;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .comparison-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .before { color: #dc3545; }
+        .after { color: #28a745; }
+
+        .protection-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 9px;
+        }
+
+        .protection-table th {
+            background: #1a1a2e;
+            color: white;
+            padding: 6px;
+            text-align: left;
+        }
+
+        .protection-table td {
+            padding: 5px 6px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .protection-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .threat {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .protection {
+            color: #28a745;
+        }
+
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 12px 0;
+        }
+
+        .arch-box {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            background: #fafafa;
+        }
+
+        .arch-box h4 {
+            color: #4361ee;
+            font-size: 11px;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .arch-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            margin: 5px 0;
+            font-size: 9px;
+        }
+
+        .arch-icon {
+            width: 14px;
+            height: 14px;
+            background: #4361ee;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 8px;
+            flex-shrink: 0;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 8.5px;
+            margin: 8px 0;
+            overflow-x: auto;
+            line-height: 1.5;
+            white-space: pre;
+        }
+
+        .code-title {
+            background: #333;
+            color: #fff;
+            padding: 4px 10px;
+            font-size: 9px;
+            border-radius: 6px 6px 0 0;
+            margin-bottom: -8px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .code-block + .code-title {
+            margin-top: 12px;
+        }
+
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .decorator { color: #c586c0; }
+        .type { color: #4ec9b0; }
+        .variable { color: #9cdcfe; }
+        .number { color: #b5cea8; }
+        .operator { color: #d4d4d4; }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 12px 0;
+            font-size: 10px;
+        }
+
+        .highlight-box strong {
+            color: #856404;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border: 1px solid #28a745;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 12px 0;
+            font-size: 10px;
+        }
+
+        .success-box strong {
+            color: #155724;
+        }
+
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 9px;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .file-path {
+            color: #888;
+            font-size: 8px;
+            font-style: italic;
+            margin-bottom: 2px;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .page {
+                box-shadow: none;
+                margin: 0;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PAGE 1: Cover and Auth Flow -->
+<div class="page">
+    <h1>🔐 My-SaaS Security Framework</h1>
+    <p class="subtitle">Arquitetura de Segurança com BFF Pattern e HttpOnly Cookies</p>
+
+    <h2>1. Fluxo de Autenticação (Login)</h2>
+
+    <div class="flow-container">
+        <div class="flow-row">
+            <div class="box box-browser">🌐 Browser<br>(Next.js)</div>
+            <span class="arrow">→</span>
+            <div class="step-text">
+                <strong>POST /api/auth/login</strong> { email, password }
+            </div>
+            <span class="arrow">→</span>
+            <div class="box box-api">⚡ NestJS API</div>
+        </div>
+    </div>
+
+    <div class="layers-container">
+        <div class="layer layer-2">
+            <span class="layer-num">1</span>
+            <strong>LoginThrottlerGuard</strong> - Rate limiting: 5 tentativas/min com lockout progressivo
+        </div>
+        <div class="layer layer-3">
+            <span class="layer-num">2</span>
+            <strong>AuthService.login()</strong> - Valida credenciais, gera JWT accessToken + refreshToken
+        </div>
+        <div class="layer layer-5">
+            <span class="layer-num">3</span>
+            <strong>Set Cookies</strong> - Tokens em HttpOnly cookies (invisíveis ao JS)
+        </div>
+    </div>
+
+    <div class="success-box">
+        <strong>✅ Response:</strong> Set-Cookie: accessToken=xxx; HttpOnly; Secure; SameSite=strict<br>
+        Body: { user, tenant, tenants } ← <strong>SEM TOKENS NO JSON!</strong>
+    </div>
+
+    <h2>2. Security Layers (Ordem de Execução)</h2>
+    <div class="layers-container">
+        <div class="layer layer-1">
+            <span class="layer-num">1</span>
+            <strong>Helmet</strong> - Security Headers: CSP, HSTS, X-Frame-Options, nosniff
+        </div>
+        <div class="layer layer-2">
+            <span class="layer-num">2</span>
+            <strong>ThrottlerGuard</strong> - Rate Limiting Global (100 req/min)
+        </div>
+        <div class="layer layer-3">
+            <span class="layer-num">3</span>
+            <strong>JwtAuthGuard</strong> - Extrai token do cookie, valida JWT
+        </div>
+        <div class="layer layer-4">
+            <span class="layer-num">4</span>
+            <strong>JwtStrategy</strong> - Cache 30s, valida user/tenant no DB
+        </div>
+        <div class="layer layer-5">
+            <span class="layer-num">5</span>
+            <strong>TenantInterceptor</strong> - Injeta tenantId no request
+        </div>
+        <div class="layer layer-6">
+            <span class="layer-num">6</span>
+            <strong>TenantGuard</strong> - Verifica membership do tenant
+        </div>
+    </div>
+
+    <h2>3. Matriz de Proteções</h2>
+    <table class="protection-table">
+        <thead>
+            <tr>
+                <th>Ameaça</th>
+                <th>Proteção Implementada</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td class="threat">XSS Token Theft</td><td class="protection">HttpOnly cookies (JS não acessa)</td></tr>
+            <tr><td class="threat">CSRF</td><td class="protection">SameSite: strict + Origin validation</td></tr>
+            <tr><td class="threat">Brute Force</td><td class="protection">LoginThrottlerGuard progressivo</td></tr>
+            <tr><td class="threat">Token Reuse</td><td class="protection">Refresh rotation + revogação DB</td></tr>
+            <tr><td class="threat">Session Hijacking</td><td class="protection">Secure cookie (HTTPS only)</td></tr>
+            <tr><td class="threat">Clickjacking</td><td class="protection">X-Frame-Options: DENY</td></tr>
+            <tr><td class="threat">Data Exposure</td><td class="protection">AES-256-GCM encryption</td></tr>
+            <tr><td class="threat">Secret Leakage</td><td class="protection">Infisical vault</td></tr>
+            <tr><td class="threat">Rainbow Tables</td><td class="protection">HMAC-SHA-256 com pepper</td></tr>
+        </tbody>
+    </table>
+
+    <div class="footer">My-SaaS Security Framework v1.0 | Página 1 de 5</div>
+</div>
+
+<!-- PAGE 2: Cookie Config + JWT Strategy -->
+<div class="page">
+    <h1>📦 Código: Backend Security</h1>
+
+    <h2>1. Configuração de Cookies</h2>
+    <p class="file-path">📁 apps/api/src/common/security/cookie-config.ts</p>
+    <div class="code-block"><span class="keyword">import</span> { <span class="type">ConfigService</span> } <span class="keyword">from</span> <span class="string">'@nestjs/config'</span>;
+<span class="keyword">import</span> { <span class="type">CookieOptions</span> } <span class="keyword">from</span> <span class="string">'express'</span>;
+
+<span class="keyword">export interface</span> <span class="type">TokenCookieConfig</span> {
+  <span class="variable">accessToken</span>: <span class="type">CookieOptions</span>;
+  <span class="variable">refreshToken</span>: <span class="type">CookieOptions</span>;
+}
+
+<span class="keyword">export function</span> <span class="function">getTokenCookieConfig</span>(<span class="variable">configService</span>: <span class="type">ConfigService</span>): <span class="type">TokenCookieConfig</span> {
+  <span class="keyword">const</span> <span class="variable">isProduction</span> = <span class="variable">configService</span>.<span class="function">get</span>(<span class="string">'NODE_ENV'</span>) === <span class="string">'production'</span>;
+
+  <span class="keyword">return</span> {
+    <span class="variable">accessToken</span>: {
+      <span class="variable">httpOnly</span>: <span class="keyword">true</span>,      <span class="comment">// JS não pode acessar</span>
+      <span class="variable">secure</span>: <span class="variable">isProduction</span>, <span class="comment">// HTTPS only em prod</span>
+      <span class="variable">sameSite</span>: <span class="string">'strict'</span>,   <span class="comment">// Proteção CSRF</span>
+      <span class="variable">maxAge</span>: <span class="number">15</span> * <span class="number">60</span> * <span class="number">1000</span>, <span class="comment">// 15 minutos</span>
+      <span class="variable">path</span>: <span class="string">'/api'</span>,
+    },
+    <span class="variable">refreshToken</span>: {
+      <span class="variable">httpOnly</span>: <span class="keyword">true</span>,
+      <span class="variable">secure</span>: <span class="variable">isProduction</span>,
+      <span class="variable">sameSite</span>: <span class="string">'strict'</span>,
+      <span class="variable">maxAge</span>: <span class="number">7</span> * <span class="number">24</span> * <span class="number">60</span> * <span class="number">60</span> * <span class="number">1000</span>, <span class="comment">// 7 dias</span>
+      <span class="variable">path</span>: <span class="string">'/api/auth'</span>, <span class="comment">// Apenas rotas de auth</span>
+    },
+  };
+}
+
+<span class="keyword">export const</span> <span class="variable">COOKIE_NAMES</span> = {
+  <span class="variable">ACCESS_TOKEN</span>: <span class="string">'accessToken'</span>,
+  <span class="variable">REFRESH_TOKEN</span>: <span class="string">'refreshToken'</span>,
+} <span class="keyword">as const</span>;</div>
+
+    <h2>2. JWT Strategy (Extração do Cookie)</h2>
+    <p class="file-path">📁 apps/api/src/modules/auth/strategies/jwt.strategy.ts</p>
+    <div class="code-block"><span class="keyword">import</span> { <span class="type">Request</span> } <span class="keyword">from</span> <span class="string">'express'</span>;
+<span class="keyword">import</span> { <span class="variable">COOKIE_NAMES</span> } <span class="keyword">from</span> <span class="string">'../../../common/security'</span>;
+
+<span class="comment">/**
+ * Extrai JWT com prioridade:
+ * 1. HttpOnly cookie (seguro, preferido para browsers)
+ * 2. Authorization header (para API clients, CLI)
+ */</span>
+<span class="keyword">function</span> <span class="function">extractJwtFromCookieOrHeader</span>(<span class="variable">req</span>: <span class="type">Request</span>): <span class="type">string</span> | <span class="keyword">null</span> {
+  <span class="comment">// Primeiro: tenta extrair do cookie HttpOnly</span>
+  <span class="keyword">const</span> <span class="variable">cookieToken</span> = <span class="variable">req</span>.<span class="variable">cookies</span>?.[<span class="variable">COOKIE_NAMES</span>.<span class="variable">ACCESS_TOKEN</span>];
+  <span class="keyword">if</span> (<span class="variable">cookieToken</span>) {
+    <span class="keyword">return</span> <span class="variable">cookieToken</span>;
+  }
+
+  <span class="comment">// Fallback: Authorization header para API clients</span>
+  <span class="keyword">const</span> <span class="variable">authHeader</span> = <span class="variable">req</span>.<span class="variable">headers</span>.<span class="variable">authorization</span>;
+  <span class="keyword">if</span> (<span class="variable">authHeader</span>?.<span class="function">startsWith</span>(<span class="string">'Bearer '</span>)) {
+    <span class="keyword">return</span> <span class="variable">authHeader</span>.<span class="function">substring</span>(<span class="number">7</span>);
+  }
+
+  <span class="keyword">return null</span>;
+}
+
+<span class="decorator">@Injectable</span>()
+<span class="keyword">export class</span> <span class="type">JwtStrategy</span> <span class="keyword">extends</span> <span class="function">PassportStrategy</span>(<span class="type">Strategy</span>) {
+  <span class="comment">// Cache curto para revogação rápida (máx 30s delay)</span>
+  <span class="keyword">private readonly</span> <span class="variable">cacheTtl</span> = <span class="number">30</span> * <span class="number">1000</span>;
+
+  <span class="keyword">constructor</span>(<span class="variable">configService</span>: <span class="type">ConfigService</span>, ...) {
+    <span class="keyword">super</span>({
+      <span class="variable">jwtFromRequest</span>: <span class="variable">extractJwtFromCookieOrHeader</span>,
+      <span class="variable">ignoreExpiration</span>: <span class="keyword">false</span>,
+      <span class="variable">secretOrKey</span>: <span class="variable">configService</span>.<span class="function">getOrThrow</span>(<span class="string">'JWT_SECRET'</span>),
+    });
+  }
+}</div>
+
+    <div class="footer">My-SaaS Security Framework v1.0 | Página 2 de 5</div>
+</div>
+
+<!-- PAGE 3: Auth Controller -->
+<div class="page">
+    <h1>📦 Código: Auth Controller</h1>
+
+    <h2>3. Controller de Autenticação</h2>
+    <p class="file-path">📁 apps/api/src/modules/auth/auth.controller.ts</p>
+    <div class="code-block"><span class="keyword">import</span> { <span class="type">Throttle</span> } <span class="keyword">from</span> <span class="string">'@nestjs/throttler'</span>;
+<span class="keyword">import</span> { <span class="type">LoginThrottlerGuard</span> } <span class="keyword">from</span> <span class="string">'../../common/guards/login-throttler.guard'</span>;
+<span class="keyword">import</span> { <span class="variable">getTokenCookieConfig</span>, <span class="variable">COOKIE_NAMES</span> } <span class="keyword">from</span> <span class="string">'../../common/security'</span>;
+
+<span class="decorator">@ApiTags</span>(<span class="string">'auth'</span>)
+<span class="decorator">@Controller</span>(<span class="string">'auth'</span>)
+<span class="keyword">export class</span> <span class="type">AuthController</span> {
+  <span class="keyword">private readonly</span> <span class="variable">cookieConfig</span>: <span class="type">TokenCookieConfig</span>;
+
+  <span class="keyword">constructor</span>(<span class="keyword">private readonly</span> <span class="variable">authService</span>: <span class="type">AuthService</span>, <span class="variable">configService</span>: <span class="type">ConfigService</span>) {
+    <span class="keyword">this</span>.<span class="variable">cookieConfig</span> = <span class="function">getTokenCookieConfig</span>(<span class="variable">configService</span>);
+  }
+
+  <span class="comment">// Seta ambos tokens em HttpOnly cookies</span>
+  <span class="keyword">private</span> <span class="function">setAuthCookies</span>(<span class="variable">res</span>: <span class="type">Response</span>, <span class="variable">accessToken</span>: <span class="type">string</span>, <span class="variable">refreshToken</span>: <span class="type">string</span>): <span class="keyword">void</span> {
+    <span class="variable">res</span>.<span class="function">cookie</span>(<span class="variable">COOKIE_NAMES</span>.<span class="variable">ACCESS_TOKEN</span>, <span class="variable">accessToken</span>, <span class="keyword">this</span>.<span class="variable">cookieConfig</span>.<span class="variable">accessToken</span>);
+    <span class="variable">res</span>.<span class="function">cookie</span>(<span class="variable">COOKIE_NAMES</span>.<span class="variable">REFRESH_TOKEN</span>, <span class="variable">refreshToken</span>, <span class="keyword">this</span>.<span class="variable">cookieConfig</span>.<span class="variable">refreshToken</span>);
+  }
+
+  <span class="decorator">@Public</span>()
+  <span class="decorator">@Post</span>(<span class="string">'register'</span>)
+  <span class="decorator">@Throttle</span>({ <span class="variable">default</span>: { <span class="variable">limit</span>: <span class="number">3</span>, <span class="variable">ttl</span>: <span class="number">60000</span> } }) <span class="comment">// 3 registros/min</span>
+  <span class="keyword">async</span> <span class="function">register</span>(<span class="decorator">@Body</span>() <span class="variable">dto</span>: <span class="type">RegisterDto</span>, <span class="decorator">@Res</span>({ <span class="variable">passthrough</span>: <span class="keyword">true</span> }) <span class="variable">res</span>: <span class="type">Response</span>) {
+    <span class="keyword">const</span> <span class="variable">result</span> = <span class="keyword">await</span> <span class="keyword">this</span>.<span class="variable">authService</span>.<span class="function">register</span>(<span class="variable">dto</span>);
+    <span class="keyword">this</span>.<span class="function">setAuthCookies</span>(<span class="variable">res</span>, <span class="variable">result</span>.<span class="variable">accessToken</span>, <span class="variable">result</span>.<span class="variable">refreshToken</span>);
+
+    <span class="comment">// Retorna APENAS dados não-sensíveis (tokens estão nos cookies)</span>
+    <span class="keyword">return</span> { <span class="variable">user</span>: <span class="variable">result</span>.<span class="variable">user</span>, <span class="variable">tenant</span>: <span class="variable">result</span>.<span class="variable">tenant</span>, <span class="variable">tenants</span>: <span class="variable">result</span>.<span class="variable">tenants</span> };
+  }
+
+  <span class="decorator">@Public</span>()
+  <span class="decorator">@Post</span>(<span class="string">'login'</span>)
+  <span class="decorator">@UseGuards</span>(<span class="type">LoginThrottlerGuard</span>) <span class="comment">// Rate limiting específico para login</span>
+  <span class="keyword">async</span> <span class="function">login</span>(<span class="decorator">@Body</span>() <span class="variable">dto</span>: <span class="type">LoginDto</span>, <span class="decorator">@Res</span>({ <span class="variable">passthrough</span>: <span class="keyword">true</span> }) <span class="variable">res</span>: <span class="type">Response</span>) {
+    <span class="keyword">const</span> <span class="variable">result</span> = <span class="keyword">await</span> <span class="keyword">this</span>.<span class="variable">authService</span>.<span class="function">login</span>(<span class="variable">dto</span>);
+    <span class="keyword">this</span>.<span class="function">setAuthCookies</span>(<span class="variable">res</span>, <span class="variable">result</span>.<span class="variable">accessToken</span>, <span class="variable">result</span>.<span class="variable">refreshToken</span>);
+    <span class="keyword">return</span> { <span class="variable">user</span>: <span class="variable">result</span>.<span class="variable">user</span>, <span class="variable">tenant</span>: <span class="variable">result</span>.<span class="variable">tenant</span>, <span class="variable">tenants</span>: <span class="variable">result</span>.<span class="variable">tenants</span> };
+  }
+
+  <span class="decorator">@Public</span>()
+  <span class="decorator">@Post</span>(<span class="string">'refresh'</span>)
+  <span class="keyword">async</span> <span class="function">refresh</span>(<span class="decorator">@Req</span>() <span class="variable">req</span>: <span class="type">Request</span>, <span class="decorator">@Res</span>({ <span class="variable">passthrough</span>: <span class="keyword">true</span> }) <span class="variable">res</span>: <span class="type">Response</span>) {
+    <span class="keyword">const</span> <span class="variable">refreshToken</span> = <span class="variable">req</span>.<span class="variable">cookies</span>?.[<span class="variable">COOKIE_NAMES</span>.<span class="variable">REFRESH_TOKEN</span>];
+    <span class="keyword">if</span> (!<span class="variable">refreshToken</span>) <span class="keyword">throw new</span> <span class="type">UnauthorizedException</span>(<span class="string">'Refresh token not found'</span>);
+
+    <span class="keyword">const</span> <span class="variable">result</span> = <span class="keyword">await</span> <span class="keyword">this</span>.<span class="variable">authService</span>.<span class="function">refreshTokens</span>(<span class="variable">refreshToken</span>);
+    <span class="keyword">this</span>.<span class="function">setAuthCookies</span>(<span class="variable">res</span>, <span class="variable">result</span>.<span class="variable">accessToken</span>, <span class="variable">result</span>.<span class="variable">refreshToken</span>);
+    <span class="keyword">return</span> { <span class="variable">user</span>: <span class="variable">result</span>.<span class="variable">user</span>, <span class="variable">tenant</span>: <span class="variable">result</span>.<span class="variable">tenant</span> };
+  }
+
+  <span class="decorator">@Post</span>(<span class="string">'logout'</span>)
+  <span class="keyword">async</span> <span class="function">logout</span>(<span class="decorator">@CurrentUser</span>() <span class="variable">user</span>: <span class="type">JwtPayload</span>, <span class="decorator">@Req</span>() <span class="variable">req</span>: <span class="type">Request</span>, <span class="decorator">@Res</span>(...) <span class="variable">res</span>: <span class="type">Response</span>) {
+    <span class="keyword">await</span> <span class="keyword">this</span>.<span class="variable">authService</span>.<span class="function">logout</span>(<span class="variable">user</span>.<span class="variable">sub</span>, <span class="variable">req</span>.<span class="variable">cookies</span>?.[<span class="variable">COOKIE_NAMES</span>.<span class="variable">REFRESH_TOKEN</span>]);
+    <span class="keyword">this</span>.<span class="function">clearAuthCookies</span>(<span class="variable">res</span>); <span class="comment">// Limpa cookies</span>
+  }
+}</div>
+
+    <div class="footer">My-SaaS Security Framework v1.0 | Página 3 de 5</div>
+</div>
+
+<!-- PAGE 4: Encryption + Secrets -->
+<div class="page">
+    <h1>📦 Código: Encryption & Secrets</h1>
+
+    <h2>4. Serviço de Criptografia (AES-256-GCM)</h2>
+    <p class="file-path">📁 apps/api/src/common/security/encryption.service.ts</p>
+    <div class="code-block"><span class="keyword">import</span> * <span class="keyword">as</span> <span class="variable">crypto</span> <span class="keyword">from</span> <span class="string">'crypto'</span>;
+
+<span class="decorator">@Injectable</span>()
+<span class="keyword">export class</span> <span class="type">EncryptionService</span> <span class="keyword">implements</span> <span class="type">OnModuleInit</span> {
+  <span class="keyword">private readonly</span> <span class="variable">algorithm</span> = <span class="string">'aes-256-gcm'</span>;
+  <span class="keyword">private</span> <span class="variable">encryptionKey</span>: <span class="type">Buffer</span> | <span class="keyword">null</span> = <span class="keyword">null</span>;
+
+  <span class="function">onModuleInit</span>() {
+    <span class="keyword">const</span> <span class="variable">keyHex</span> = <span class="keyword">this</span>.<span class="variable">configService</span>.<span class="function">get</span>(<span class="string">'ENCRYPTION_KEY'</span>);
+    <span class="keyword">if</span> (<span class="variable">keyHex</span>?.<span class="variable">length</span> === <span class="number">64</span>) {
+      <span class="keyword">this</span>.<span class="variable">encryptionKey</span> = <span class="type">Buffer</span>.<span class="function">from</span>(<span class="variable">keyHex</span>, <span class="string">'hex'</span>);
+    }
+  }
+
+  <span class="comment">/**
+   * Criptografa dados sensíveis
+   * @returns Base64: iv + authTag + ciphertext
+   */</span>
+  <span class="function">encrypt</span>(<span class="variable">plaintext</span>: <span class="type">string</span>): <span class="type">string</span> {
+    <span class="keyword">const</span> <span class="variable">iv</span> = <span class="variable">crypto</span>.<span class="function">randomBytes</span>(<span class="number">16</span>); <span class="comment">// IV aleatório por operação</span>
+    <span class="keyword">const</span> <span class="variable">cipher</span> = <span class="variable">crypto</span>.<span class="function">createCipheriv</span>(<span class="keyword">this</span>.<span class="variable">algorithm</span>, <span class="keyword">this</span>.<span class="variable">encryptionKey</span>, <span class="variable">iv</span>);
+
+    <span class="keyword">const</span> <span class="variable">encrypted</span> = <span class="type">Buffer</span>.<span class="function">concat</span>([<span class="variable">cipher</span>.<span class="function">update</span>(<span class="variable">plaintext</span>, <span class="string">'utf8'</span>), <span class="variable">cipher</span>.<span class="function">final</span>()]);
+    <span class="keyword">const</span> <span class="variable">authTag</span> = <span class="variable">cipher</span>.<span class="function">getAuthTag</span>();
+
+    <span class="keyword">return</span> <span class="type">Buffer</span>.<span class="function">concat</span>([<span class="variable">iv</span>, <span class="variable">authTag</span>, <span class="variable">encrypted</span>]).<span class="function">toString</span>(<span class="string">'base64'</span>);
+  }
+
+  <span class="comment">/**
+   * Hash com HMAC-SHA-256 (protege contra rainbow tables)
+   */</span>
+  <span class="function">hash</span>(<span class="variable">data</span>: <span class="type">string</span>): <span class="type">string</span> {
+    <span class="keyword">const</span> <span class="variable">pepper</span> = <span class="keyword">this</span>.<span class="variable">configService</span>.<span class="function">get</span>(<span class="string">'HASH_PEPPER'</span>) ||
+                   <span class="keyword">this</span>.<span class="variable">encryptionKey</span>?.<span class="function">toString</span>(<span class="string">'hex'</span>).<span class="function">slice</span>(<span class="number">0</span>, <span class="number">32</span>);
+    <span class="keyword">return</span> <span class="variable">crypto</span>.<span class="function">createHmac</span>(<span class="string">'sha256'</span>, <span class="variable">pepper</span>).<span class="function">update</span>(<span class="variable">data</span>).<span class="function">digest</span>(<span class="string">'hex'</span>);
+  }
+}</div>
+
+    <h2>5. Serviço de Secrets (Infisical)</h2>
+    <p class="file-path">📁 apps/api/src/common/security/secrets.service.ts</p>
+    <div class="code-block"><span class="decorator">@Injectable</span>()
+<span class="keyword">export class</span> <span class="type">SecretsService</span> <span class="keyword">implements</span> <span class="type">OnModuleInit</span> {
+  <span class="keyword">private</span> <span class="variable">secrets</span>: <span class="type">Map</span><<span class="type">string</span>, <span class="type">string</span>> = <span class="keyword">new</span> <span class="type">Map</span>();
+  <span class="keyword">private readonly</span> <span class="variable">useVault</span>: <span class="type">boolean</span>;
+
+  <span class="keyword">constructor</span>(<span class="keyword">private readonly</span> <span class="variable">configService</span>: <span class="type">ConfigService</span>) {
+    <span class="keyword">this</span>.<span class="variable">useVault</span> = !!<span class="keyword">this</span>.<span class="variable">configService</span>.<span class="function">get</span>(<span class="string">'INFISICAL_TOKEN'</span>);
+  }
+
+  <span class="keyword">async</span> <span class="function">onModuleInit</span>() {
+    <span class="keyword">if</span> (<span class="keyword">this</span>.<span class="variable">useVault</span>) <span class="keyword">await</span> <span class="keyword">this</span>.<span class="function">loadFromVault</span>();
+  }
+
+  <span class="comment">/** Prioridade: Vault > Environment Variable */</span>
+  <span class="function">get</span>(<span class="variable">key</span>: <span class="type">string</span>): <span class="type">string</span> | <span class="keyword">undefined</span> {
+    <span class="keyword">return</span> <span class="keyword">this</span>.<span class="variable">secrets</span>.<span class="function">get</span>(<span class="variable">key</span>) || <span class="keyword">this</span>.<span class="variable">configService</span>.<span class="function">get</span>(<span class="variable">key</span>);
+  }
+
+  <span class="keyword">private async</span> <span class="function">loadFromVault</span>(): <span class="type">Promise</span><<span class="keyword">void</span>> {
+    <span class="keyword">const</span> { <span class="type">InfisicalClient</span> } = <span class="keyword">await</span> <span class="function">import</span>(<span class="string">'@infisical/sdk'</span>);
+    <span class="keyword">const</span> <span class="variable">client</span> = <span class="keyword">new</span> <span class="type">InfisicalClient</span>({ <span class="variable">siteUrl</span>: <span class="string">'https://app.infisical.com'</span> });
+
+    <span class="keyword">const</span> <span class="variable">secretsList</span> = <span class="keyword">await</span> <span class="variable">client</span>.<span class="function">listSecrets</span>({
+      <span class="variable">environment</span>: <span class="string">'prod'</span>,
+      <span class="variable">projectId</span>: <span class="keyword">this</span>.<span class="variable">configService</span>.<span class="function">get</span>(<span class="string">'INFISICAL_PROJECT_ID'</span>),
+    });
+
+    <span class="keyword">for</span> (<span class="keyword">const</span> <span class="variable">secret</span> <span class="keyword">of</span> <span class="variable">secretsList</span>) {
+      <span class="keyword">this</span>.<span class="variable">secrets</span>.<span class="function">set</span>(<span class="variable">secret</span>.<span class="variable">secretKey</span>, <span class="variable">secret</span>.<span class="variable">secretValue</span>);
+    }
+  }
+}</div>
+
+    <div class="highlight-box">
+        <strong>⚠️ Secrets a migrar para Vault:</strong><br>
+        JWT_SECRET, JWT_REFRESH_SECRET, DATABASE_URL, REDIS_URL, ENCRYPTION_KEY, API keys de terceiros
+    </div>
+
+    <div class="footer">My-SaaS Security Framework v1.0 | Página 4 de 5</div>
+</div>
+
+<!-- PAGE 5: Frontend Code + Main.ts -->
+<div class="page">
+    <h1>📦 Código: Frontend & Helmet</h1>
+
+    <h2>6. Auth Store (SEM TOKENS)</h2>
+    <p class="file-path">📁 apps/web/src/lib/auth-store.ts</p>
+    <div class="code-block"><span class="keyword">import</span> { <span class="variable">create</span> } <span class="keyword">from</span> <span class="string">'zustand'</span>;
+<span class="keyword">import</span> { <span class="variable">persist</span>, <span class="variable">createJSONStorage</span> } <span class="keyword">from</span> <span class="string">'zustand/middleware'</span>;
+
+<span class="comment">/**
+ * SEGURANÇA: Access tokens são armazenados em HttpOnly cookies.
+ * O frontend armazena APENAS metadata do usuário (não-sensível).
+ */</span>
+<span class="keyword">interface</span> <span class="type">AuthState</span> {
+  <span class="variable">user</span>: <span class="type">User</span> | <span class="keyword">null</span>;
+  <span class="variable">tenant</span>: <span class="type">Tenant</span> | <span class="keyword">null</span>;
+  <span class="variable">tenants</span>: <span class="type">Tenant</span>[];
+  <span class="variable">isAuthenticated</span>: <span class="type">boolean</span>;
+  <span class="comment">// ⚠️ NÃO HÁ accessToken aqui!</span>
+
+  <span class="function">setAuth</span>: (<span class="variable">data</span>: { <span class="variable">user</span>: <span class="type">User</span>; <span class="variable">tenant</span>?: <span class="type">Tenant</span>; <span class="variable">tenants</span>?: <span class="type">Tenant</span>[] }) => <span class="keyword">void</span>;
+  <span class="function">logout</span>: () => <span class="keyword">void</span>;
+}
+
+<span class="keyword">export const</span> <span class="variable">useAuthStore</span> = <span class="function">create</span><<span class="type">AuthState</span>>()(<span class="function">persist</span>(
+  (<span class="variable">set</span>) => ({
+    <span class="variable">user</span>: <span class="keyword">null</span>, <span class="variable">tenant</span>: <span class="keyword">null</span>, <span class="variable">tenants</span>: [], <span class="variable">isAuthenticated</span>: <span class="keyword">false</span>,
+    <span class="function">setAuth</span>: (<span class="variable">data</span>) => <span class="function">set</span>({ ...<span class="variable">data</span>, <span class="variable">isAuthenticated</span>: <span class="keyword">true</span> }),
+    <span class="function">logout</span>: () => <span class="function">set</span>({ <span class="variable">user</span>: <span class="keyword">null</span>, <span class="variable">tenant</span>: <span class="keyword">null</span>, <span class="variable">tenants</span>: [], <span class="variable">isAuthenticated</span>: <span class="keyword">false</span> }),
+  }),
+  { <span class="variable">name</span>: <span class="string">'auth-storage'</span>, <span class="variable">storage</span>: <span class="function">createJSONStorage</span>(() => <span class="variable">sessionStorage</span>) }
+));</div>
+
+    <h2>7. API Client (Cookie Automático)</h2>
+    <p class="file-path">📁 apps/web/src/lib/api.ts</p>
+    <div class="code-block"><span class="keyword">import</span> <span class="variable">axios</span> <span class="keyword">from</span> <span class="string">'axios'</span>;
+
+<span class="comment">/**
+ * SEGURANÇA: Auth via HttpOnly cookies (não há Authorization header)
+ * withCredentials: true garante que cookies são enviados cross-origin
+ */</span>
+<span class="keyword">const</span> <span class="variable">api</span> = <span class="variable">axios</span>.<span class="function">create</span>({
+  <span class="variable">baseURL</span>: <span class="variable">process</span>.<span class="variable">env</span>.<span class="variable">NEXT_PUBLIC_API_URL</span>,
+  <span class="variable">withCredentials</span>: <span class="keyword">true</span>, <span class="comment">// Envia HttpOnly cookies</span>
+});
+
+<span class="comment">// Auto-refresh em 401</span>
+<span class="variable">api</span>.<span class="variable">interceptors</span>.<span class="variable">response</span>.<span class="function">use</span>(
+  (<span class="variable">response</span>) => <span class="variable">response</span>,
+  <span class="keyword">async</span> (<span class="variable">error</span>) => {
+    <span class="keyword">if</span> (<span class="variable">error</span>.<span class="variable">response</span>?.<span class="variable">status</span> === <span class="number">401</span> && !<span class="variable">error</span>.<span class="variable">config</span>.<span class="variable">_retry</span>) {
+      <span class="variable">error</span>.<span class="variable">config</span>.<span class="variable">_retry</span> = <span class="keyword">true</span>;
+      <span class="keyword">await</span> <span class="variable">axios</span>.<span class="function">post</span>(<span class="string">'/api/auth/refresh'</span>, {}, { <span class="variable">withCredentials</span>: <span class="keyword">true</span> });
+      <span class="keyword">return</span> <span class="function">api</span>(<span class="variable">error</span>.<span class="variable">config</span>); <span class="comment">// Retry com novo token (no cookie)</span>
+    }
+    <span class="keyword">return</span> <span class="type">Promise</span>.<span class="function">reject</span>(<span class="variable">error</span>);
+  }
+);</div>
+
+    <h2>8. Helmet Security Headers</h2>
+    <p class="file-path">📁 apps/api/src/main.ts</p>
+    <div class="code-block"><span class="keyword">import</span> <span class="variable">helmet</span> <span class="keyword">from</span> <span class="string">'helmet'</span>;
+
+<span class="variable">app</span>.<span class="function">use</span>(<span class="function">helmet</span>({
+  <span class="variable">contentSecurityPolicy</span>: <span class="variable">isProduction</span> ? {
+    <span class="variable">directives</span>: {
+      <span class="variable">defaultSrc</span>: [<span class="string">"'self'"</span>],
+      <span class="variable">styleSrc</span>: [<span class="string">"'self'"</span>, <span class="string">"'unsafe-inline'"</span>],
+      <span class="variable">imgSrc</span>: [<span class="string">"'self'"</span>, <span class="string">'data:'</span>, <span class="string">'https:'</span>],
+      <span class="variable">scriptSrc</span>: [<span class="string">"'self'"</span>],
+    },
+  } : <span class="keyword">false</span>,
+  <span class="variable">hsts</span>: <span class="variable">isProduction</span> ? { <span class="variable">maxAge</span>: <span class="number">31536000</span>, <span class="variable">includeSubDomains</span>: <span class="keyword">true</span>, <span class="variable">preload</span>: <span class="keyword">true</span> } : <span class="keyword">false</span>,
+  <span class="variable">noSniff</span>: <span class="keyword">true</span>,
+  <span class="variable">xssFilter</span>: <span class="keyword">true</span>,
+  <span class="variable">referrerPolicy</span>: { <span class="variable">policy</span>: <span class="string">'strict-origin-when-cross-origin'</span> },
+  <span class="variable">frameguard</span>: { <span class="variable">action</span>: <span class="string">'deny'</span> },
+}));
+
+<span class="comment">// Swagger desabilitado em produção</span>
+<span class="keyword">if</span> (!<span class="variable">isProduction</span>) {
+  <span class="type">SwaggerModule</span>.<span class="function">setup</span>(<span class="string">'api/docs'</span>, <span class="variable">app</span>, <span class="variable">document</span>);
+}</div>
+
+    <div class="success-box">
+        <strong>✅ BFF Pattern Completo:</strong> Tokens JWT nunca são expostos ao JavaScript.
+        O browser envia cookies HttpOnly automaticamente. DevTools não mostra tokens.
+    </div>
+
+    <div class="footer">My-SaaS Security Framework v1.0 | Página 5 de 7</div>
+</div>
+
+<!-- PAGE 6: Practical Usage Examples -->
+<div class="page">
+    <h1>💡 Exemplos Práticos: Uso no Sistema</h1>
+
+    <h2>1. Armazenando API Keys de Terceiros (Service)</h2>
+    <p class="file-path">📁 apps/api/src/modules/integrations/integrations.service.ts</p>
+    <div class="code-block"><span class="keyword">import</span> { <span class="type">Injectable</span> } <span class="keyword">from</span> <span class="string">'@nestjs/common'</span>;
+<span class="keyword">import</span> { <span class="type">PrismaService</span> } <span class="keyword">from</span> <span class="string">'../../common/database/prisma.service'</span>;
+<span class="keyword">import</span> { <span class="type">EncryptionService</span> } <span class="keyword">from</span> <span class="string">'../../common/security'</span>;
+
+<span class="decorator">@Injectable</span>()
+<span class="keyword">export class</span> <span class="type">IntegrationsService</span> {
+  <span class="keyword">constructor</span>(
+    <span class="keyword">private readonly</span> <span class="variable">prisma</span>: <span class="type">PrismaService</span>,
+    <span class="keyword">private readonly</span> <span class="variable">encryption</span>: <span class="type">EncryptionService</span>,
+  ) {}
+
+  <span class="comment">/**
+   * Salva API key de integração (ex: Stripe, SendGrid)
+   * A chave é criptografada antes de ir pro banco
+   */</span>
+  <span class="keyword">async</span> <span class="function">saveApiKey</span>(<span class="variable">tenantId</span>: <span class="type">string</span>, <span class="variable">provider</span>: <span class="type">string</span>, <span class="variable">apiKey</span>: <span class="type">string</span>) {
+    <span class="comment">// Criptografa a API key antes de salvar</span>
+    <span class="keyword">const</span> <span class="variable">encryptedKey</span> = <span class="keyword">this</span>.<span class="variable">encryption</span>.<span class="function">encrypt</span>(<span class="variable">apiKey</span>);
+
+    <span class="keyword">return</span> <span class="keyword">this</span>.<span class="variable">prisma</span>.<span class="variable">integration</span>.<span class="function">upsert</span>({
+      <span class="variable">where</span>: { <span class="variable">tenantId_provider</span>: { <span class="variable">tenantId</span>, <span class="variable">provider</span> } },
+      <span class="variable">create</span>: { <span class="variable">tenantId</span>, <span class="variable">provider</span>, <span class="variable">apiKey</span>: <span class="variable">encryptedKey</span> },
+      <span class="variable">update</span>: { <span class="variable">apiKey</span>: <span class="variable">encryptedKey</span> },
+    });
+  }
+
+  <span class="comment">/**
+   * Recupera API key descriptografada para uso
+   */</span>
+  <span class="keyword">async</span> <span class="function">getApiKey</span>(<span class="variable">tenantId</span>: <span class="type">string</span>, <span class="variable">provider</span>: <span class="type">string</span>): <span class="type">Promise</span><<span class="type">string</span> | <span class="keyword">null</span>> {
+    <span class="keyword">const</span> <span class="variable">integration</span> = <span class="keyword">await</span> <span class="keyword">this</span>.<span class="variable">prisma</span>.<span class="variable">integration</span>.<span class="function">findUnique</span>({
+      <span class="variable">where</span>: { <span class="variable">tenantId_provider</span>: { <span class="variable">tenantId</span>, <span class="variable">provider</span> } },
+    });
+
+    <span class="keyword">if</span> (!<span class="variable">integration</span>) <span class="keyword">return null</span>;
+    <span class="keyword">return</span> <span class="keyword">this</span>.<span class="variable">encryption</span>.<span class="function">decrypt</span>(<span class="variable">integration</span>.<span class="variable">apiKey</span>);
+  }
+}</div>
+
+    <h2>2. CPF/CNPJ com Busca Criptografada</h2>
+    <p class="file-path">📁 apps/api/src/modules/customers/customers.service.ts</p>
+    <div class="code-block"><span class="decorator">@Injectable</span>()
+<span class="keyword">export class</span> <span class="type">CustomersService</span> {
+  <span class="keyword">constructor</span>(
+    <span class="keyword">private readonly</span> <span class="variable">prisma</span>: <span class="type">PrismaService</span>,
+    <span class="keyword">private readonly</span> <span class="variable">encryption</span>: <span class="type">EncryptionService</span>,
+  ) {}
+
+  <span class="comment">/**
+   * Cria cliente com CPF criptografado + hash para busca
+   */</span>
+  <span class="keyword">async</span> <span class="function">create</span>(<span class="variable">tenantId</span>: <span class="type">string</span>, <span class="variable">dto</span>: <span class="type">CreateCustomerDto</span>) {
+    <span class="comment">// CPF normalizado (apenas números)</span>
+    <span class="keyword">const</span> <span class="variable">cpfNormalized</span> = <span class="variable">dto</span>.<span class="variable">cpf</span>.<span class="function">replace</span>(<span class="string">/\D/g</span>, <span class="string">''</span>);
+
+    <span class="keyword">return</span> <span class="keyword">this</span>.<span class="variable">prisma</span>.<span class="variable">customer</span>.<span class="function">create</span>({
+      <span class="variable">data</span>: {
+        <span class="variable">tenantId</span>,
+        <span class="variable">name</span>: <span class="variable">dto</span>.<span class="variable">name</span>,
+        <span class="variable">email</span>: <span class="variable">dto</span>.<span class="variable">email</span>,
+        <span class="comment">// CPF criptografado (para exibição)</span>
+        <span class="variable">cpfEncrypted</span>: <span class="keyword">this</span>.<span class="variable">encryption</span>.<span class="function">encrypt</span>(<span class="variable">cpfNormalized</span>),
+        <span class="comment">// Hash do CPF (para busca - mesmo input = mesmo hash)</span>
+        <span class="variable">cpfHash</span>: <span class="keyword">this</span>.<span class="variable">encryption</span>.<span class="function">hash</span>(<span class="variable">cpfNormalized</span>),
+      },
+    });
+  }
+
+  <span class="comment">/**
+   * Busca cliente por CPF usando o hash
+   */</span>
+  <span class="keyword">async</span> <span class="function">findByCpf</span>(<span class="variable">tenantId</span>: <span class="type">string</span>, <span class="variable">cpf</span>: <span class="type">string</span>) {
+    <span class="keyword">const</span> <span class="variable">cpfHash</span> = <span class="keyword">this</span>.<span class="variable">encryption</span>.<span class="function">hash</span>(<span class="variable">cpf</span>.<span class="function">replace</span>(<span class="string">/\D/g</span>, <span class="string">''</span>));
+
+    <span class="keyword">const</span> <span class="variable">customer</span> = <span class="keyword">await</span> <span class="keyword">this</span>.<span class="variable">prisma</span>.<span class="variable">customer</span>.<span class="function">findFirst</span>({
+      <span class="variable">where</span>: { <span class="variable">tenantId</span>, <span class="variable">cpfHash</span> },
+    });
+
+    <span class="keyword">if</span> (<span class="variable">customer</span>) {
+      <span class="comment">// Descriptografa CPF para retornar</span>
+      <span class="variable">customer</span>.<span class="variable">cpf</span> = <span class="keyword">this</span>.<span class="variable">encryption</span>.<span class="function">decrypt</span>(<span class="variable">customer</span>.<span class="variable">cpfEncrypted</span>);
+    }
+    <span class="keyword">return</span> <span class="variable">customer</span>;
+  }
+}</div>
+
+    <div class="highlight-box">
+        <strong>💡 Padrão Hash + Encrypt:</strong><br>
+        • <strong>Hash</strong> (HMAC-SHA-256): Permite buscar no banco sem expor o dado real<br>
+        • <strong>Encrypt</strong> (AES-256-GCM): Armazena dado reversível para exibição
+    </div>
+
+    <div class="footer">My-SaaS Security Framework v1.0 | Página 6 de 7</div>
+</div>
+
+<!-- PAGE 7: Complete Controller Example + Prisma Schema -->
+<div class="page">
+    <h1>💡 Exemplos Práticos: Controller Completo</h1>
+
+    <h2>3. Controller com Todas as Camadas de Segurança</h2>
+    <p class="file-path">📁 apps/api/src/modules/integrations/integrations.controller.ts</p>
+    <div class="code-block"><span class="keyword">import</span> { <span class="type">Controller</span>, <span class="type">Get</span>, <span class="type">Post</span>, <span class="type">Body</span>, <span class="type">Param</span>, <span class="type">UseGuards</span> } <span class="keyword">from</span> <span class="string">'@nestjs/common'</span>;
+<span class="keyword">import</span> { <span class="type">ApiBearerAuth</span>, <span class="type">ApiTags</span>, <span class="type">ApiOperation</span> } <span class="keyword">from</span> <span class="string">'@nestjs/swagger'</span>;
+<span class="keyword">import</span> { <span class="type">Throttle</span> } <span class="keyword">from</span> <span class="string">'@nestjs/throttler'</span>;
+<span class="keyword">import</span> { <span class="type">TenantGuard</span>, <span class="type">RolesGuard</span> } <span class="keyword">from</span> <span class="string">'../../common/guards'</span>;
+<span class="keyword">import</span> { <span class="type">CurrentTenant</span>, <span class="type">Roles</span> } <span class="keyword">from</span> <span class="string">'../../common/decorators'</span>;
+
+<span class="decorator">@ApiTags</span>(<span class="string">'integrations'</span>)
+<span class="decorator">@ApiBearerAuth</span>(<span class="string">'JWT-auth'</span>)
+<span class="decorator">@Controller</span>(<span class="string">'integrations'</span>)
+<span class="decorator">@UseGuards</span>(<span class="type">TenantGuard</span>, <span class="type">RolesGuard</span>) <span class="comment">// Requer autenticação + tenant</span>
+<span class="keyword">export class</span> <span class="type">IntegrationsController</span> {
+  <span class="keyword">constructor</span>(<span class="keyword">private readonly</span> <span class="variable">service</span>: <span class="type">IntegrationsService</span>) {}
+
+  <span class="decorator">@Post</span>(<span class="string">':provider/api-key'</span>)
+  <span class="decorator">@Roles</span>(<span class="string">'admin'</span>, <span class="string">'owner'</span>) <span class="comment">// Apenas admins</span>
+  <span class="decorator">@Throttle</span>({ <span class="variable">default</span>: { <span class="variable">limit</span>: <span class="number">5</span>, <span class="variable">ttl</span>: <span class="number">60000</span> } }) <span class="comment">// 5 por minuto</span>
+  <span class="decorator">@ApiOperation</span>({ <span class="variable">summary</span>: <span class="string">'Salvar API key de integração'</span> })
+  <span class="keyword">async</span> <span class="function">saveApiKey</span>(
+    <span class="decorator">@CurrentTenant</span>() <span class="variable">tenantId</span>: <span class="type">string</span>,
+    <span class="decorator">@Param</span>(<span class="string">'provider'</span>) <span class="variable">provider</span>: <span class="type">string</span>,
+    <span class="decorator">@Body</span>() <span class="variable">dto</span>: <span class="type">SaveApiKeyDto</span>,
+  ) {
+    <span class="comment">// API key é criptografada automaticamente pelo service</span>
+    <span class="keyword">await</span> <span class="keyword">this</span>.<span class="variable">service</span>.<span class="function">saveApiKey</span>(<span class="variable">tenantId</span>, <span class="variable">provider</span>, <span class="variable">dto</span>.<span class="variable">apiKey</span>);
+    <span class="keyword">return</span> { <span class="variable">message</span>: <span class="string">'API key salva com sucesso'</span> };
+  }
+
+  <span class="decorator">@Get</span>(<span class="string">':provider/status'</span>)
+  <span class="decorator">@ApiOperation</span>({ <span class="variable">summary</span>: <span class="string">'Verificar status da integração'</span> })
+  <span class="keyword">async</span> <span class="function">checkStatus</span>(
+    <span class="decorator">@CurrentTenant</span>() <span class="variable">tenantId</span>: <span class="type">string</span>,
+    <span class="decorator">@Param</span>(<span class="string">'provider'</span>) <span class="variable">provider</span>: <span class="type">string</span>,
+  ) {
+    <span class="keyword">const</span> <span class="variable">apiKey</span> = <span class="keyword">await</span> <span class="keyword">this</span>.<span class="variable">service</span>.<span class="function">getApiKey</span>(<span class="variable">tenantId</span>, <span class="variable">provider</span>);
+    <span class="keyword">return</span> {
+      <span class="variable">configured</span>: !!<span class="variable">apiKey</span>,
+      <span class="comment">// NUNCA retornar a apiKey real!</span>
+      <span class="variable">maskedKey</span>: <span class="variable">apiKey</span> ? <span class="string">`***${<span class="variable">apiKey</span>.slice(-4)}`</span> : <span class="keyword">null</span>,
+    };
+  }
+}</div>
+
+    <h2>4. Schema Prisma para Dados Criptografados</h2>
+    <p class="file-path">📁 apps/api/prisma/schema.prisma</p>
+    <div class="code-block"><span class="keyword">model</span> <span class="type">Customer</span> {
+  <span class="variable">id</span>           <span class="type">String</span>   <span class="decorator">@id</span> <span class="decorator">@default</span>(<span class="function">uuid</span>())
+  <span class="variable">tenantId</span>     <span class="type">String</span>
+  <span class="variable">name</span>         <span class="type">String</span>
+  <span class="variable">email</span>        <span class="type">String</span>
+
+  <span class="comment">// Dados sensíveis criptografados</span>
+  <span class="variable">cpfEncrypted</span> <span class="type">String</span>   <span class="comment">// AES-256-GCM encrypted</span>
+  <span class="variable">cpfHash</span>      <span class="type">String</span>   <span class="comment">// HMAC-SHA-256 para busca</span>
+
+  <span class="variable">tenant</span>       <span class="type">Tenant</span>   <span class="decorator">@relation</span>(<span class="variable">fields</span>: [<span class="variable">tenantId</span>], <span class="variable">references</span>: [<span class="variable">id</span>])
+
+  <span class="decorator">@@unique</span>([<span class="variable">tenantId</span>, <span class="variable">cpfHash</span>]) <span class="comment">// Índice para busca rápida</span>
+  <span class="decorator">@@index</span>([<span class="variable">tenantId</span>])
+}
+
+<span class="keyword">model</span> <span class="type">Integration</span> {
+  <span class="variable">id</span>        <span class="type">String</span>   <span class="decorator">@id</span> <span class="decorator">@default</span>(<span class="function">uuid</span>())
+  <span class="variable">tenantId</span>  <span class="type">String</span>
+  <span class="variable">provider</span>  <span class="type">String</span>   <span class="comment">// "stripe", "sendgrid", etc</span>
+  <span class="variable">apiKey</span>    <span class="type">String</span>   <span class="comment">// AES-256-GCM encrypted</span>
+  <span class="variable">isActive</span>  <span class="type">Boolean</span>  <span class="decorator">@default</span>(<span class="keyword">true</span>)
+  <span class="variable">createdAt</span> <span class="type">DateTime</span> <span class="decorator">@default</span>(<span class="function">now</span>())
+  <span class="variable">updatedAt</span> <span class="type">DateTime</span> <span class="decorator">@updatedAt</span>
+
+  <span class="variable">tenant</span>    <span class="type">Tenant</span>   <span class="decorator">@relation</span>(<span class="variable">fields</span>: [<span class="variable">tenantId</span>], <span class="variable">references</span>: [<span class="variable">id</span>])
+
+  <span class="decorator">@@unique</span>([<span class="variable">tenantId</span>, <span class="variable">provider</span>])
+  <span class="decorator">@@index</span>([<span class="variable">tenantId</span>])
+}</div>
+
+    <h2>5. Checklist de Verificação</h2>
+    <div class="two-col">
+        <div class="arch-box">
+            <h4>🔒 Backend</h4>
+            <div class="arch-item"><span class="arch-icon">✓</span> Helmet headers configurados</div>
+            <div class="arch-item"><span class="arch-icon">✓</span> JWT em HttpOnly cookie</div>
+            <div class="arch-item"><span class="arch-icon">✓</span> Rate limiting em auth</div>
+            <div class="arch-item"><span class="arch-icon">✓</span> Swagger desabilitado em prod</div>
+            <div class="arch-item"><span class="arch-icon">✓</span> Encryption service para PII</div>
+            <div class="arch-item"><span class="arch-icon">✓</span> HMAC hash para busca</div>
+        </div>
+        <div class="arch-box">
+            <h4>🌐 Frontend</h4>
+            <div class="arch-item"><span class="arch-icon">✓</span> Sem token em localStorage</div>
+            <div class="arch-item"><span class="arch-icon">✓</span> Sem token em sessionStorage</div>
+            <div class="arch-item"><span class="arch-icon">✓</span> Sem token em zustand</div>
+            <div class="arch-item"><span class="arch-icon">✓</span> withCredentials: true</div>
+            <div class="arch-item"><span class="arch-icon">✓</span> Auto-refresh em 401</div>
+            <div class="arch-item"><span class="arch-icon">✓</span> Apenas metadata do user</div>
+        </div>
+    </div>
+
+    <div class="success-box">
+        <strong>✅ Validação Manual:</strong><br>
+        1. Abrir DevTools → Application → Cookies: Verificar httpOnly=true nos tokens<br>
+        2. DevTools → Console: <code>document.cookie</code> não deve mostrar accessToken<br>
+        3. DevTools → Network → Headers: Verificar X-Frame-Options, HSTS, CSP
+    </div>
+
+    <div class="footer">
+        My-SaaS Security Framework v1.0 | Página 7 de 7<br>
+        Gerado em: <script>document.write(new Date().toLocaleDateString('pt-BR'))</script>
+    </div>
+</div>
+
+</body>
+</html>

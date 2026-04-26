@@ -3,6 +3,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { findAvailablePort } from './common/utils/port.util';
 
@@ -10,6 +11,35 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const configService = app.get(ConfigService);
+  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
+  const isProduction = nodeEnv === 'production';
+
+  // Security headers with Helmet
+  app.use(
+    helmet({
+      contentSecurityPolicy: isProduction
+        ? {
+            directives: {
+              defaultSrc: ["'self'"],
+              styleSrc: ["'self'", "'unsafe-inline'"],
+              imgSrc: ["'self'", 'data:', 'https:'],
+              scriptSrc: ["'self'"],
+            },
+          }
+        : false, // Disable CSP in development for easier debugging
+      hsts: isProduction
+        ? {
+            maxAge: 31536000, // 1 year
+            includeSubDomains: true,
+            preload: true,
+          }
+        : false,
+      noSniff: true,
+      xssFilter: true,
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      frameguard: { action: 'deny' },
+    }),
+  );
 
   // Cookie parser middleware
   app.use(cookieParser());
@@ -27,10 +57,9 @@ async function bootstrap() {
   );
 
   // CORS configuration
-  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
   const corsOrigins = configService.get<string>('CORS_ORIGINS');
 
-  if (nodeEnv === 'production' && !corsOrigins) {
+  if (isProduction && !corsOrigins) {
     throw new Error(
       'CORS_ORIGINS environment variable must be set in production. ' +
       'Example: CORS_ORIGINS=https://example.com,https://www.example.com'
@@ -53,34 +82,36 @@ async function bootstrap() {
     exclude: ['health'],
   });
 
-  // Swagger/OpenAPI documentation
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('My SaaS API')
-    .setDescription('Multi-tenant SaaS API with authentication and authorization')
-    .setVersion('1.1.0')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        name: 'Authorization',
-        description: 'Enter JWT token',
-        in: 'header',
-      },
-      'JWT-auth',
-    )
-    .addTag('auth', 'Authentication endpoints')
-    .addTag('users', 'User management endpoints')
-    .addTag('tenants', 'Tenant management endpoints')
-    .addTag('health', 'Health check endpoints')
-    .build();
+  // Swagger/OpenAPI documentation - disabled in production for security
+  if (!isProduction) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('My SaaS API')
+      .setDescription('Multi-tenant SaaS API with authentication and authorization')
+      .setVersion('1.1.0')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          name: 'Authorization',
+          description: 'Enter JWT token',
+          in: 'header',
+        },
+        'JWT-auth',
+      )
+      .addTag('auth', 'Authentication endpoints')
+      .addTag('users', 'User management endpoints')
+      .addTag('tenants', 'Tenant management endpoints')
+      .addTag('health', 'Health check endpoints')
+      .build();
 
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document, {
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-  });
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, document, {
+      swaggerOptions: {
+        persistAuthorization: true,
+      },
+    });
+  }
 
   const preferredPort = configService.get<number>('PORT', 3000);
   const port = await findAvailablePort(preferredPort);
@@ -88,6 +119,8 @@ async function bootstrap() {
 
   const logger = new Logger('Bootstrap');
   logger.log(`Application running on port ${port}`);
-  logger.log(`Swagger documentation available at http://localhost:${port}/api/docs`);
+  if (!isProduction) {
+    logger.log(`Swagger documentation available at http://localhost:${port}/api/docs`);
+  }
 }
 bootstrap();
