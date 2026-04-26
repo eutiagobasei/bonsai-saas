@@ -1,10 +1,6 @@
-# Bonsai SaaS Framework
-
 <div align="center">
 
-**Grow your business organically**
-
-Um framework SaaS multi-tenant pronto para produção, construído com NestJS e Next.js.
+![Bonsai Framework SaaS](docs/assets/banner.png)
 
 [![Version](https://img.shields.io/badge/version-1.5.0-green.svg)](https://github.com/eutiagobasei/my-saas)
 [![NestJS](https://img.shields.io/badge/NestJS-10.x-red.svg)](https://nestjs.com)
@@ -13,6 +9,8 @@ Um framework SaaS multi-tenant pronto para produção, construído com NestJS e 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 </div>
+
+# Bonsai SaaS Framework
 
 ---
 
