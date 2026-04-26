@@ -1,6 +1,6 @@
-# Wiki Index - My-SaaS Framework
+# Wiki Index - Bonsai SaaS
 
-Knowledge base for the My-SaaS framework.
+Knowledge base for the Bonsai SaaS framework.
 
 ## Concepts
 
@@ -11,6 +11,7 @@ Knowledge base for the My-SaaS framework.
 ## Architecture
 
 - [System Overview](arquitetura/overview.md) - High-level architecture
+- [Security Framework](arquitetura/security-framework.md) - Enterprise-grade security (SaaS REST Security 10/10)
 
 ## Decisions
 

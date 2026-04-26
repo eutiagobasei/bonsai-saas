@@ -1,13 +1,14 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Providers } from '@/components/Providers'
+import { branding } from '@/config/branding'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'My SaaS',
-  description: 'My SaaS Application',
+  title: branding.name,
+  description: branding.description,
 }
 
 export default function RootLayout({

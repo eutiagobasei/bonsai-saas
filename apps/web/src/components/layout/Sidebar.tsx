@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { TenantSwitcher } from '../TenantSwitcher';
+import { branding } from '@/config/branding';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
@@ -49,11 +50,11 @@ export function Sidebar() {
           {/* Logo */}
           <div className="flex items-center h-16 px-4 border-b border-gray-200 dark:border-gray-800">
             <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">GC</span>
+              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">{branding.logo.initials}</span>
               </div>
               <span className="font-semibold text-gray-900 dark:text-white">
-                GastroCalc
+                {branding.name}
               </span>
             </Link>
           </div>
@@ -76,7 +77,7 @@ export function Sidebar() {
                     'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium',
                     'transition-colors duration-150',
                     isActive
-                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                      ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400'
                       : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
                   )}
                 >

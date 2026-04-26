@@ -6,6 +6,7 @@ import * as cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { findAvailablePort } from './common/utils/port.util';
+import { branding } from './config/branding';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -85,9 +86,9 @@ async function bootstrap() {
   // Swagger/OpenAPI documentation - disabled in production for security
   if (!isProduction) {
     const swaggerConfig = new DocumentBuilder()
-      .setTitle('My SaaS API')
-      .setDescription('Multi-tenant SaaS API with authentication and authorization')
-      .setVersion('1.1.0')
+      .setTitle(branding.api.title)
+      .setDescription(branding.api.description)
+      .setVersion(branding.api.version)
       .addBearerAuth(
         {
           type: 'http',
