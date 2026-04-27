@@ -85,11 +85,15 @@ http:
           - "text/event-stream"
 
     # Basic Auth for admin routes (optional)
+    # WARNING: Replace placeholder credentials before deployment!
     admin-auth:
       basicAuth:
         users:
-          # Generate with: htpasswd -nb admin your-password
-          - "admin:$apr1$xxxxxxxxxxxxx"
+          # IMPORTANT: This is a PLACEHOLDER - you MUST replace it!
+          # Generate real credentials with: htpasswd -nb admin your-secure-password
+          # Then paste the output here (format: user:$apr1$hash...)
+          # Example output: admin:$apr1$ruca84Hq$mbjdMZBAG.KWn7vfN/SNK/
+          - "admin:$apr1$xxxxxxxxxxxxx"  # <-- REPLACE THIS LINE
         removeHeader: true
 
     # IP Whitelist (for admin/internal routes)
