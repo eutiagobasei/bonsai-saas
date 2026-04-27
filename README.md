@@ -2,7 +2,7 @@
 
 ![Bonsai Framework SaaS](docs/assets/banner.png)
 
-[![Version](https://img.shields.io/badge/version-1.5.0-green.svg)](https://github.com/eutiagobasei/my-saas)
+[![Version](https://img.shields.io/badge/version-1.5.0-green.svg)](https://github.com/eutiagobasei/bonsai-saas)
 [![NestJS](https://img.shields.io/badge/NestJS-10.x-red.svg)](https://nestjs.com)
 [![Next.js](https://img.shields.io/badge/Next.js-14.x-black.svg)](https://nextjs.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://postgresql.org)
@@ -51,7 +51,7 @@ Bonsai é um **framework/boilerplate** para construir aplicações SaaS multi-te
 ### Passo 1: Clone o projeto
 
 ```bash
-git clone https://github.com/eutiagobasei/my-saas.git
+git clone https://github.com/eutiagobasei/bonsai-saas.git
 cd my-saas
 ```
 
@@ -822,6 +822,6 @@ MIT License - veja [LICENSE](LICENSE) para detalhes.
 
 **Feito com** NestJS, Next.js, Prisma, PostgreSQL, Redis e Docker.
 
-[Documentação](wiki/) · [Reportar Bug](https://github.com/eutiagobasei/my-saas/issues) · [Solicitar Feature](https://github.com/eutiagobasei/my-saas/issues)
+[Documentação](wiki/) · [Reportar Bug](https://github.com/eutiagobasei/bonsai-saas/issues) · [Solicitar Feature](https://github.com/eutiagobasei/bonsai-saas/issues)
 
 </div>
