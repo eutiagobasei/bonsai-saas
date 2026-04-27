@@ -93,11 +93,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // Verify user still exists
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true },
+      select: { id: true, isSuperAdmin: true },
     });
 
     if (!user) {
       throw new UnauthorizedException('User no longer exists');
+    }
+
+    // Update isSuperAdmin status if it has changed
+    if (user.isSuperAdmin !== payload.isSuperAdmin) {
+      payload.isSuperAdmin = user.isSuperAdmin;
     }
 
     // If tenant is specified, verify membership still exists

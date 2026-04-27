@@ -14,6 +14,7 @@ import { TenantsModule } from './modules/tenants/tenants.module';
 import { HealthModule } from './modules/health/health.module';
 import { SupplyCategoriesModule } from './modules/supply-categories/supply-categories.module';
 import { SuppliesModule } from './modules/supplies/supplies.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
@@ -65,6 +66,7 @@ import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
     TenantsModule,
     SupplyCategoriesModule,
     SuppliesModule,
+    AdminModule,
   ],
   providers: [
     // Global Rate Limiting Guard

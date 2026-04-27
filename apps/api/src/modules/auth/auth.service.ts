@@ -27,6 +27,7 @@ export interface TokenPayload {
   tenantId?: string;
   role?: string;
   sessionId?: string;
+  isSuperAdmin?: boolean;
 }
 
 export interface AuthResponse {
@@ -36,6 +37,7 @@ export interface AuthResponse {
     id: string;
     email: string;
     name: string | null;
+    isSuperAdmin: boolean;
   };
   tenant?: {
     id: string;
@@ -153,6 +155,7 @@ export class AuthService {
       {
         sub: user.id,
         email: user.email,
+        ...(user.isSuperAdmin && { isSuperAdmin: true }),
       },
       user.id,
       null,
@@ -165,6 +168,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+        isSuperAdmin: user.isSuperAdmin,
       },
       tenants: memberships.map(
         (m: { tenant: { id: string; name: string }; role: string }) => ({
@@ -378,7 +382,7 @@ export class AuthService {
   }
 
   private async generateAuthResponse(
-    user: { id: string; email: string; name: string | null },
+    user: { id: string; email: string; name: string | null; isSuperAdmin?: boolean },
     tenantId?: string,
     role?: string,
     req?: Request,
@@ -420,6 +424,7 @@ export class AuthService {
       ...(tenantId && { tenantId }),
       ...(tenantRole && { role: tenantRole }),
       ...(session && { sessionId: session.id }),
+      ...(user.isSuperAdmin && { isSuperAdmin: true }),
     };
 
     const tokens = await this.generateTokens(
@@ -437,6 +442,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+        isSuperAdmin: user.isSuperAdmin ?? false,
       },
     };
 

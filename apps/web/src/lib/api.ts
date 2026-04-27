@@ -212,3 +212,87 @@ export const supplyApi = {
   delete: (id: string) =>
     api.delete(`/supplies/${id}`),
 };
+
+// ============================================
+// Admin API (Super Admin only)
+// ============================================
+
+export interface AdminStats {
+  totalTenants: number;
+  totalUsers: number;
+  tenantsThisMonth: number;
+  usersThisMonth: number;
+  activeTenants: number;
+}
+
+export interface AdminTenant {
+  id: string;
+  name: string;
+  slug: string;
+  plan: 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE';
+  status: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+  createdAt: string;
+  updatedAt: string;
+  _count: {
+    members: number;
+  };
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  name: string | null;
+  isSuperAdmin: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count: {
+    tenantMemberships: number;
+  };
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface AdminPaginationOptions {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+export const adminApi = {
+  // Stats
+  getStats: () => api.get<AdminStats>('/admin/stats'),
+
+  // Tenants
+  getTenants: (options?: AdminPaginationOptions) => {
+    const params = new URLSearchParams();
+    if (options?.page) params.append('page', String(options.page));
+    if (options?.limit) params.append('limit', String(options.limit));
+    if (options?.search) params.append('search', options.search);
+    return api.get<PaginatedResponse<AdminTenant>>(`/admin/tenants?${params.toString()}`);
+  },
+  getTenantById: (id: string) => api.get<AdminTenant>(`/admin/tenants/${id}`),
+  updateTenant: (id: string, data: Partial<Pick<AdminTenant, 'name' | 'plan' | 'status'>>) =>
+    api.patch<AdminTenant>(`/admin/tenants/${id}`, data),
+  deleteTenant: (id: string) => api.delete(`/admin/tenants/${id}`),
+
+  // Users
+  getUsers: (options?: AdminPaginationOptions) => {
+    const params = new URLSearchParams();
+    if (options?.page) params.append('page', String(options.page));
+    if (options?.limit) params.append('limit', String(options.limit));
+    if (options?.search) params.append('search', options.search);
+    return api.get<PaginatedResponse<AdminUser>>(`/admin/users?${params.toString()}`);
+  },
+  getUserById: (id: string) => api.get<AdminUser>(`/admin/users/${id}`),
+  updateUser: (id: string, data: Partial<Pick<AdminUser, 'email' | 'name' | 'isSuperAdmin'>>) =>
+    api.patch<AdminUser>(`/admin/users/${id}`, data),
+  deleteUser: (id: string) => api.delete(`/admin/users/${id}`),
+};

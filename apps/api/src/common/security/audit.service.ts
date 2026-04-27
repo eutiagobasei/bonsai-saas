@@ -21,7 +21,9 @@ export type AuditAction =
   | 'API_KEY_REVOKED'
   | 'DATA_DELETION_REQUEST'
   | 'CONSENT_GRANTED'
-  | 'CONSENT_REVOKED';
+  | 'CONSENT_REVOKED'
+  | 'ADMIN_UPDATE'
+  | 'ADMIN_DELETE';
 
 export interface AuditLogEntry {
   userId?: string;

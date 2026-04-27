@@ -22,6 +22,7 @@ model User {
   emailVerified DateTime? @map("email_verified")
   mfaEnabled    Boolean   @default(false) @map("mfa_enabled")
   mfaSecret     String?   @map("mfa_secret")  // Encrypted TOTP secret
+  isSuperAdmin  Boolean   @default(false) @map("is_super_admin")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
